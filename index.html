@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentHost: your agent never sleeps</title>
+<meta name="description" content="One command moves your Claude Code or Hermes setup to a 24/7 box in your own cloud. Skills, memory, MCP servers, repos. Talk to it from your phone.">
+<meta property="og:title" content="AgentHost: your agent never sleeps">
+<meta property="og:description" content="One command moves your whole agent harness to a 24/7 box you control. There is no AgentHost server.">
+<meta property="og:url" content="https://agenthost.space">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://agenthost.space/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://agenthost.space/og.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230B0D10'/><rect x='28' y='38' width='16' height='28' fill='%23FF6A3D'/><rect x='54' y='38' width='16' height='28' fill='%23E8ECF0' opacity='.85'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --base: #0B0D10;
+    --surface: #14171B;
+    --glass-fill: rgba(232, 236, 240, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-highlight: rgba(255, 255, 255, 0.35);
+    --ink: #E8ECF0;
+    --ink-dim: #8A93A0;
+    --accent: #FF6A3D;
+    --accent-dim: #C94F28;
+    --sans: "Inter", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; background: var(--base); color-scheme: dark; }
+  body {
+    background: var(--base);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--accent); color: var(--base); }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+  /* Liquid Glass (iOS 26 material, translated to CSS):
+     a thick lens, not a frosted pane. Traits: lensing at the rim
+     (multi-side inset light), a liquid-metal gradient ring that catches
+     light unevenly, inner glow, saturated refraction of what's behind,
+     and a pointer-tracked specular glare (see JS). */
+  .glass {
+    position: relative;
+    background:
+      radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,0.10), rgba(255,255,255,0.015) 48%),
+      var(--glass-fill);
+    backdrop-filter: blur(24px) saturate(180%) brightness(1.06);
+    -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.06);
+    border: none;
+    border-radius: var(--radius);
+    box-shadow:
+      inset 0 1.5px 1px rgba(255,255,255,0.5),
+      inset 0 -1px 1px rgba(255,255,255,0.10),
+      inset 1.5px 0 1px -1px rgba(255,255,255,0.18),
+      inset -1.5px 0 1px -1px rgba(255,255,255,0.18),
+      inset 0 0 22px rgba(255,255,255,0.045),
+      0 24px 50px -16px rgba(0,0,0,0.72);
+  }
+  /* the liquid-metal rim: a 1px gradient ring, bright where light hits */
+  .glass::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    padding: 1px; pointer-events: none;
+    background: linear-gradient(135deg,
+      rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.10) 24%,
+      rgba(255,255,255,0.03) 46%, rgba(255,255,255,0.02) 58%,
+      rgba(255,255,255,0.16) 82%, rgba(255,255,255,0.42) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+  }
+  /* wet specular glare that follows the pointer (set via --mx/--my) */
+  @media (hover: hover) {
+    .glass::after {
+      content: ""; position: absolute; inset: 0; border-radius: inherit;
+      pointer-events: none; opacity: 0; transition: opacity .35s;
+      background: radial-gradient(260px circle at var(--mx, 50%) var(--my, -20%),
+        rgba(255,255,255,0.09), transparent 62%);
+    }
+    .glass:hover::after { opacity: 1; }
+  }
+  .mono { font-family: var(--mono); }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    display: block;
+    margin-bottom: 14px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 88px 0; }
+
+  /* ambient light so the glass has something to refract */
+  /* the glass needs something behind it to bend: drifting color fields */
+  .glow {
+    position: fixed; pointer-events: none; z-index: 0;
+    width: 780px; height: 780px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,106,61,0.10) 0%, transparent 62%);
+    top: -240px; right: -160px;
+    animation: drift1 26s ease-in-out infinite alternate;
+  }
+  .glow2 {
+    position: absolute; pointer-events: none; z-index: 0;
+    width: 620px; height: 620px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(120,150,255,0.07) 0%, transparent 60%);
+    top: 440px; left: -260px;
+    animation: drift2 34s ease-in-out infinite alternate;
+  }
+  @keyframes drift1 { to { transform: translate(-90px, 70px) scale(1.12); } }
+  @keyframes drift2 { to { transform: translate(110px, -50px) scale(1.08); } }
+
+  /* nav */
+  nav {
+    position: sticky; top: 12px; z-index: 50;
+    max-width: 1120px; margin: 12px auto 0; padding: 0 24px;
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 22px; border-radius: 999px; /* capsule, per the material */
+    will-change: backdrop-filter;
+    transition: box-shadow .3s;
+  }
+  .wordmark { font-family: var(--mono); font-weight: 500; font-size: 15px; text-decoration: none; }
+  .wordmark .tick { color: var(--accent); }
+  .nav-links { display: flex; gap: 22px; align-items: center; }
+  .nav-links a { font-size: 14px; color: var(--ink-dim); text-decoration: none; transition: color .15s; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-cta {
+    color: var(--base) !important;
+    background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0) 55%), var(--accent);
+    padding: 7px 16px; border-radius: 999px; font-weight: 600;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 1px rgba(0,0,0,0.15), 0 4px 14px -4px rgba(255,106,61,0.5);
+    transition: transform .12s, filter .15s;
+  }
+  .nav-cta:hover { filter: brightness(1.06); }
+  .nav-cta:active { transform: scale(0.96); }
+
+  /* hero */
+  .hero { position: relative; padding: 96px 0 72px; }
+  .hero-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 48px; align-items: center; }
+  h1 {
+    font-size: clamp(38px, 5vw, 58px);
+    font-weight: 700; letter-spacing: -0.02em; line-height: 1.06;
+  }
+  h1 .dim { color: var(--ink-dim); }
+  .hero-sub { margin-top: 22px; font-size: 17.5px; color: var(--ink-dim); max-width: 44ch; }
+  .hero-sub code { font-family: var(--mono); font-size: 15px; color: var(--ink); background: var(--surface); padding: 1px 7px; border-radius: 6px; border: 1px solid var(--glass-border); }
+
+  .install {
+    display: flex; align-items: center; gap: 14px;
+    margin-top: 30px; padding: 16px 24px; border-radius: 999px; /* capsule */
+    font-family: var(--mono); font-size: 16px;
+    width: fit-content; max-width: 100%;
+    transition: transform .15s;
+  }
+  .install:active { transform: scale(0.985); }
+  .install .dollar { color: var(--ink-dim); }
+  .install .cursor {
+    display: inline-block; width: 9px; height: 19px; margin-left: 2px;
+    background: var(--accent); vertical-align: text-bottom;
+    animation: blink 1.06s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .copy-btn {
+    font-family: var(--mono); font-size: 12.5px; cursor: pointer;
+    background: var(--surface); color: var(--ink-dim);
+    border: 1px solid var(--glass-border); border-radius: 8px; padding: 6px 11px;
+    transition: transform .12s, color .12s;
+  }
+  .copy-btn:hover { color: var(--ink); }
+  .copy-btn.done { color: var(--accent); transform: scale(1.06); }
+  .hero-proofline { margin-top: 22px; font-family: var(--mono); font-size: 13px; color: var(--ink-dim); }
+  .hero-proofline b { color: var(--ink); font-weight: 500; }
+
+  /* the signature: glass-framed terminal replaying a real migration */
+  .term-frame { padding: 10px; border-radius: 20px; }
+  .term {
+    background: var(--surface); border-radius: 12px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .term-bar .dot { width: 11px; height: 11px; border-radius: 50%; background: #2A2F36; }
+  .term-bar .dot.live { background: var(--accent); animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.45; } }
+  .term-bar .title { margin-left: 6px; font-family: var(--mono); font-size: 12px; color: var(--ink-dim); }
+  .term-body {
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.75;
+    padding: 18px 20px 22px; min-height: 336px;
+    color: var(--ink-dim); white-space: pre-wrap; word-break: break-word;
+  }
+  .term-body .cmd { color: var(--ink); }
+  .term-body .ok { color: var(--accent); }
+  .term-body .out { color: var(--ink-dim); }
+  .term-body .final { color: var(--ink); font-weight: 500; }
+
+  /* proof strip */
+  .proof { border-top: 1px solid rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.07); padding: 34px 0; }
+  .proof-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .proof-item .big { font-family: var(--mono); font-size: 15px; color: var(--ink); font-weight: 500; }
+  .proof-item .small { font-size: 13.5px; color: var(--ink-dim); margin-top: 4px; }
+
+  /* how it works: a transcript, because it is one */
+  h2 { font-size: clamp(26px, 3.2vw, 34px); font-weight: 700; letter-spacing: -0.015em; line-height: 1.15; }
+  .section-sub { color: var(--ink-dim); margin-top: 12px; max-width: 56ch; }
+  .steps { margin-top: 40px; background: var(--surface); border: 1px solid rgba(255,255,255,0.07); border-radius: var(--radius); padding: 10px 0; }
+  .step {
+    display: grid; grid-template-columns: 96px 1fr; gap: 18px;
+    padding: 18px 26px; align-items: baseline;
+  }
+  .step + .step { border-top: 1px solid rgba(255,255,255,0.05); }
+  .step .tag { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+  .step .what { font-size: 15.5px; color: var(--ink); }
+  .step .what span { color: var(--ink-dim); }
+
+  /* security */
+  .security-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 40px; align-items: start; }
+  .sec-card { background: var(--surface); border: 1px solid rgba(255,255,255,0.07); border-radius: var(--radius); padding: 26px; }
+  .sec-card ul { list-style: none; }
+  .sec-card li { padding: 9px 0; font-size: 15px; color: var(--ink-dim); display: flex; gap: 12px; }
+  .sec-card li::before { content: "✓"; color: var(--accent); font-family: var(--mono); flex-shrink: 0; }
+  .sec-path {
+    font-family: var(--mono); font-size: 13.5px; line-height: 2.1; color: var(--ink-dim);
+    background: var(--surface); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius); padding: 26px;
+  }
+  .sec-path .node { color: var(--ink); }
+  .sec-path .no { color: var(--accent); }
+
+  /* pricing: no live blur here (perf) — pre-baked fills */
+  .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; max-width: 860px; }
+  .price-card { /* same lens look, pre-baked (no live blur; brief's perf rule) */
+    position: relative;
+    background:
+      radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,0.08), rgba(255,255,255,0.01) 50%),
+      linear-gradient(180deg, rgba(232,236,240,0.05), rgba(232,236,240,0.02));
+    border: none; border-radius: 24px;
+    padding: 30px; display: flex; flex-direction: column;
+    box-shadow: inset 0 1.5px 1px rgba(255,255,255,0.28), inset 0 -1px 1px rgba(255,255,255,0.06);
+  }
+  .price-card::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    padding: 1px; pointer-events: none;
+    background: linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05) 30%, rgba(255,255,255,0.02) 60%, rgba(255,255,255,0.25) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+  }
+  .price-card.featured {
+    box-shadow: inset 0 1.5px 1px rgba(255,255,255,0.5), inset 0 -1px 1px rgba(255,255,255,0.08), 0 24px 50px -16px rgba(0,0,0,0.72);
+  }
+  .price-card.featured::before {
+    background: linear-gradient(135deg, var(--accent), rgba(255,106,61,0.25) 35%, rgba(255,255,255,0.06) 60%, var(--accent-dim) 100%);
+  }
+  .price-name { font-family: var(--mono); font-size: 13px; color: var(--ink-dim); }
+  .price-num { font-size: 40px; font-weight: 700; margin-top: 10px; letter-spacing: -0.02em; }
+  .price-num .per { font-size: 15px; font-weight: 400; color: var(--ink-dim); }
+  .price-card ul { list-style: none; margin: 20px 0 26px; flex: 1; }
+  .price-card li { padding: 7px 0; font-size: 14.5px; color: var(--ink-dim); display: flex; gap: 10px; }
+  .price-card li::before { content: "+"; color: var(--accent); font-family: var(--mono); }
+  .btn {
+    display: block; text-align: center; text-decoration: none; font-weight: 600;
+    font-size: 15px; padding: 13px 18px; border-radius: 999px; /* capsule */
+    transition: transform .12s, filter .15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { /* glassProminent: tinted liquid glass */
+    background: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0) 55%), var(--accent);
+    color: var(--base);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -1px 1px rgba(0,0,0,0.18), 0 8px 22px -6px rgba(255,106,61,0.45);
+  }
+  .btn-primary:hover { filter: brightness(1.06); }
+  .btn-ghost {
+    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015)), var(--surface);
+    color: var(--ink);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 1px rgba(255,255,255,0.05);
+  }
+  .btn-ghost:hover { filter: brightness(1.12); }
+  .seat-note { text-align: center; font-family: var(--mono); font-size: 12px; color: var(--ink-dim); margin-top: 12px; }
+
+  /* faq */
+  .faq { max-width: 760px; }
+  .faq details {
+    background: var(--surface); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; margin-top: 12px; overflow: hidden;
+  }
+  .faq summary {
+    cursor: pointer; padding: 17px 22px; font-weight: 600; font-size: 15px;
+    list-style: none; display: flex; justify-content: space-between; align-items: center;
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; font-family: var(--mono); color: var(--accent); font-size: 17px; }
+  .faq details[open] summary::after { content: "−"; }
+  .faq .a { padding: 0 22px 18px; color: var(--ink-dim); font-size: 14.5px; }
+  .faq .a code { font-family: var(--mono); font-size: 13px; color: var(--ink); }
+
+  /* waitlist */
+  .waitlist-form { display: flex; gap: 10px; margin-top: 14px; max-width: 420px; }
+  .waitlist-form input {
+    flex: 1; background: var(--base); border: 1px solid var(--glass-border);
+    border-radius: 10px; color: var(--ink); padding: 11px 14px; font: inherit; font-size: 16px;
+  }
+  .waitlist-form button {
+    background: var(--surface); color: var(--ink); border: 1px solid var(--glass-border);
+    border-radius: 10px; padding: 11px 16px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .waitlist-form button:hover { border-color: var(--accent); }
+
+  footer {
+    border-top: 1px solid rgba(255,255,255,0.07); padding: 44px 0 60px;
+    color: var(--ink-dim); font-size: 14px;
+  }
+  .foot-grid { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  footer a { color: var(--ink-dim); }
+  footer a:hover { color: var(--ink); }
+
+  @media (max-width: 900px) {
+    section { padding: 64px 0; }
+    .hero { padding: 56px 0 48px; }
+    .hero-grid, .security-grid, .price-grid { grid-template-columns: 1fr; }
+    .proof-grid { grid-template-columns: 1fr; gap: 20px; }
+    .glass, .nav-inner {
+      backdrop-filter: blur(14px) saturate(160%);
+      -webkit-backdrop-filter: blur(14px) saturate(160%);
+    }
+    .term-body { min-height: 300px; font-size: 12.5px; }
+    .nav-links a:not(.nav-cta) { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<nav>
+  <div class="nav-inner glass">
+    <a class="wordmark" href="/">agenthost<span class="tick">▮</span></a>
+    <div class="nav-links">
+      <a href="#how">how it works</a>
+      <a href="#security">security</a>
+      <a href="#pricing">pricing</a>
+      <a href="https://github.com/Stevekaplanai/agenthost">github</a>
+      <a class="nav-cta" href="#pricing">founding seat</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="glow2" aria-hidden="true"></div>
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">// npx agenthost-cli</span>
+      <h1>Your AI agent dies when your laptop sleeps.<span class="dim"> Fix that tonight.</span></h1>
+      <p class="hero-sub">One command moves your whole <code>~/.claude</code> to a 24/7 box in your own cloud. Skills, memory, MCP servers, repos. Talk to it from your phone.</p>
+      <div class="install glass">
+        <span><span class="dollar">$</span> <span id="install-cmd">npx agenthost-cli</span><span class="cursor" aria-hidden="true"></span></span>
+        <button class="copy-btn" id="copy" aria-label="Copy install command" aria-live="polite">copy</button>
+      </div>
+      <p class="hero-proofline">works with <b>Claude Code</b> today · <b>Hermes</b> beta · Codex + OpenClaw next</p>
+    </div>
+    <div class="term-frame glass">
+      <div class="term">
+        <div class="term-bar">
+          <span class="dot live"></span><span class="dot"></span><span class="dot"></span>
+          <span class="title">steve-agent.fly.dev : always on</span>
+        </div>
+        <div class="term-body" id="replay" role="log" aria-label="Terminal replay of a real migration"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+<div class="proof">
+  <div class="wrap proof-grid">
+    <div class="proof-item">
+      <div class="big">5 minutes, laptop to cloud</div>
+      <div class="small">Detect, pack, deploy, verify. One command, five prompts.</div>
+    </div>
+    <div class="proof-item">
+      <div class="big">There is no AgentHost server</div>
+      <div class="small">Your keys go into your own cloud account's encrypted vault. We never see them.</div>
+    </div>
+    <div class="proof-item">
+      <div class="big">~$11/mo in compute</div>
+      <div class="small">Paid to Fly.io directly, not to us. Your box, your bill.</div>
+    </div>
+  </div>
+</div>
+
+<section id="how">
+  <div class="wrap">
+    <span class="eyebrow">// how it works</span>
+    <h2>The migration is the product.</h2>
+    <p class="section-sub">Anyone can start a cloud container. The hard part is your agent arriving with its memory intact. The transcript up top is a real run, first try, numbers untouched.</p>
+    <div class="steps">
+      <div class="step"><span class="tag">[1/5]</span><div class="what">Detects your harness. <span>Claude Code from <code class="mono">~/.claude</code>, Hermes from its home. Skills, agents, memory, config.</span></div></div>
+      <div class="step"><span class="tag">[2/5]</span><div class="what">Packs it, minus your secrets. <span>Credential files never leave disk. Keys inside configs get redacted and re-provided as encrypted secrets.</span></div></div>
+      <div class="step"><span class="tag">[3/5]</span><div class="what">Checks cloud compatibility. <span>MCP servers pointing at localhost get flagged and disabled, not silently broken.</span></div></div>
+      <div class="step"><span class="tag">[4/5]</span><div class="what">Deploys to YOUR Fly.io account. <span>App, encrypted volume, secrets, container. Repos clone fresh with a scoped token.</span></div></div>
+      <div class="step"><span class="tag">[5/5]</span><div class="what">Hands you a link. <span>Tap it on your phone: live terminal, cookie login, no passwords to type. It survives lid-close, sleep, and airport wifi.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="security">
+  <div class="wrap">
+    <span class="eyebrow">// security</span>
+    <h2>There is no server to trust.</h2>
+    <div class="security-grid">
+      <div class="sec-path" role="group" aria-label="Where your secrets travel">
+        <span class="node">your laptop</span>  →  flyctl (on your machine)<br>
+        &nbsp;&nbsp;→  <span class="node">your Fly.io account</span> (encrypted secret store)<br>
+        &nbsp;&nbsp;→  <span class="node">your container</span><br><br>
+        <span class="no">✗</span> AgentHost servers: none exist<br>
+        <span class="no">✗</span> telemetry on secret values: none<br>
+        <span class="no">✗</span> credential files migrated: never
+      </div>
+      <div class="sec-card">
+        <ul>
+          <li>Auth is a value you hand over: a <code class="mono">claude setup-token</code> (default) or your own API key. Never lifted from disk.</li>
+          <li>GitHub access is a fine-grained token scoped to the repos you pick. Never account-wide.</li>
+          <li>Every .env entry needs your per-file consent before it becomes a cloud secret.</li>
+          <li>MIT licensed. Read exactly what leaves your machine.</li>
+          <li>One command teardown: <code class="mono">agenthost destroy</code> removes app, volume, and secrets.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="wrap">
+    <span class="eyebrow">// pricing</span>
+    <h2>The CLI is free. The head start is not.</h2>
+    <div class="price-grid">
+      <div class="price-card">
+        <div class="price-name">self-serve</div>
+        <div class="price-num">$0</div>
+        <ul>
+          <li>The full open-source CLI</li>
+          <li>Your cloud account, your ~$11/mo Fly bill</li>
+          <li>Docs + GitHub issues</li>
+        </ul>
+        <a class="btn btn-ghost" href="https://github.com/Stevekaplanai/agenthost">Read the code</a>
+        <div class="seat-note">npx agenthost-cli</div>
+      </div>
+      <div class="price-card featured">
+        <div class="price-name" style="color: var(--accent)">founding operator</div>
+        <div class="price-num">$29<span class="per">/mo</span></div>
+        <ul>
+          <li>Concierge migration: I move your rig with you, live</li>
+          <li>Phone terminal set up on your home screen</li>
+          <li>Priority support, direct line</li>
+          <li>Founding price locked forever, hosted tier grandfathered</li>
+        </ul>
+        <a class="btn btn-primary" href="https://buy.stripe.com/aFa14pdwi2xX6zI9nLfAc0b">Claim a founding seat</a>
+        <div class="seat-note">20 seats at this price. Ever. Enforced by Stripe.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap faq">
+    <span class="eyebrow">// questions</span>
+    <h2>Asked and answered.</h2>
+    <details>
+      <summary>Is this safe? Where do my keys go?</summary>
+      <div class="a">Your laptop hands them to flyctl. flyctl puts them in your own Fly.io account's encrypted secret store. Your container reads them there. There is no AgentHost backend to breach. The CLI has zero telemetry on secret values, and <code>--dry-run</code> shows the exact manifest before anything moves.</div>
+    </details>
+    <details>
+      <summary>Is this against Anthropic's terms?</summary>
+      <div class="a">The cloud agent authenticates with a value you explicitly provide. That means a <code>claude setup-token</code> (the supported headless path for subscribers) or your own API key. AgentHost never lifts credential files or login sessions off your disk.</div>
+    </details>
+    <details>
+      <summary>My machine is always on. Why would I need this?</summary>
+      <div class="a">Then you are the parallel-agents customer. Run the deploy twice and you have two agents. One builds. One watches GitHub. Neither steals CPU while you render video. Your machine goes back to being yours.</div>
+    </details>
+    <details>
+      <summary>What does it cost to run?</summary>
+      <div class="a">$11 to $12 per month for an always-on box with 2GB of RAM. Fly.io bills you directly. Claude usage is separate. The CLI itself is free.</div>
+    </details>
+    <details>
+      <summary>Codex? OpenClaw? Other agents?</summary>
+      <div class="a">Claude Code is fully supported today, Hermes is in beta, Codex and OpenClaw are next. Leave an email and you'll hear when yours lands:
+        <form class="waitlist-form" action="https://formsubmit.co/steve@stevekaplan.ai" method="POST">
+          <input type="hidden" name="_subject" value="AgentHost waitlist">
+          <input type="hidden" name="_next" value="https://agenthost.space">
+          <input type="email" name="email" placeholder="you@company.com" required aria-label="Email for waitlist">
+          <button type="submit">Notify me</button>
+        </form>
+      </div>
+    </details>
+    <details>
+      <summary>How do I kill it?</summary>
+      <div class="a"><code>agenthost destroy</code>. App, volume, secrets: gone from your account. One command in, one command out.</div>
+    </details>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap foot-grid">
+    <div>agenthost<span style="color:var(--accent)">▮</span> &nbsp;built in one day with Claude Code. Product #10 by <a href="https://stevekaplan.ai">Steve Kaplan</a>.</div>
+    <div><a href="https://github.com/Stevekaplanai/agenthost">GitHub</a> &nbsp;·&nbsp; <a href="#pricing">Pricing</a> &nbsp;·&nbsp; <a href="mailto:steve@stevekaplan.ai">Contact</a></div>
+  </div>
+</footer>
+
+<script>
+  // copy button
+  document.getElementById("copy").addEventListener("click", async function () {
+    try { await navigator.clipboard.writeText("npx agenthost-cli"); } catch (e) {
+      const r = document.createRange(); r.selectNode(document.getElementById("install-cmd"));
+      getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy");
+      getSelection().removeAllRanges();
+    }
+    this.textContent = "copied ✓"; this.classList.add("done");
+    setTimeout(() => { this.textContent = "copy"; this.classList.remove("done"); }, 1400);
+  });
+
+  // the signature: replay of a real migration (numbers from the first real run)
+  const LINES = [
+    { t: "$ npx agenthost-cli", c: "cmd", type: true },
+    { t: "  detecting harness... claude code (196 skills, 15 memory dirs)", c: "out" },
+    { t: "  packing 2,248 files (77.2 MB)", c: "out" },
+    { t: "  redacting secrets from configs... 12 redacted", c: "out" },
+    { t: "  mcp compatibility... 24 portable, 2 disabled (localhost)", c: "out" },
+    { t: "  creating app in YOUR fly.io account... done", c: "out" },
+    { t: "  volume + secrets + deploy... done", c: "out" },
+    { t: "  agent is live: https://steve-agent.fly.dev", c: "ok" },
+    { t: " ", c: "out" },
+    { t: "$ # laptop lid: closed.", c: "cmd", type: true, pause: 900 },
+    { t: "  [cloud] agent: still working.", c: "final", pause: 600 },
+  ];
+  const replay = document.getElementById("replay");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function renderStatic() {
+    replay.innerHTML = LINES.map(l => `<div class="${l.c}">${l.t}</div>`).join("");
+  }
+  async function run() {
+    replay.innerHTML = "";
+    for (const line of LINES) {
+      const div = document.createElement("div");
+      div.className = line.c;
+      replay.appendChild(div);
+      if (line.pause) await sleep(line.pause);
+      if (line.type) {
+        for (let i = 0; i <= line.t.length; i++) { div.textContent = line.t.slice(0, i); await sleep(26); }
+      } else {
+        div.textContent = line.t;
+        await sleep(210 + Math.random() * 240);
+      }
+    }
+    await sleep(6000);
+    run();
+  }
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  reduced ? renderStatic() : run();
+
+  // liquid specular glare: track the pointer per glass element (rAF-throttled)
+  if (matchMedia("(hover: hover)").matches && !reduced) {
+    let raf = null;
+    document.addEventListener("pointermove", (e) => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        document.querySelectorAll(".glass").forEach((el) => {
+          const r = el.getBoundingClientRect();
+          if (e.clientX >= r.left - 80 && e.clientX <= r.right + 80 && e.clientY >= r.top - 80 && e.clientY <= r.bottom + 80) {
+            el.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100) + "%");
+            el.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100) + "%");
+          }
+        });
+      });
+    }, { passive: true });
+  }
+</script>
+</body>
+</html>
