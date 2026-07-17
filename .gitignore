@@ -1,0 +1,17 @@
+node_modules/
+dist/
+out/
+*.tar.gz
+*.tgz
+.env
+.env.*
+fly.toml.deploy
+staging/
+manifest.json
+compat-report.md
+Dockerfile.deploy
+.vercel/
+*.local.txt
+site-legal/.gitignore
+site/promo.mp4
+*.mp4

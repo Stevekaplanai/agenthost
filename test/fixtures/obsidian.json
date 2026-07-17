@@ -1,0 +1,21 @@
+{
+  "vaults": {
+    "a1b2c3d4e5f60718": {
+      "path": "C:\\Users\\Steve\\Obsidian\\SecondBrain",
+      "ts": 1751600000000,
+      "open": true
+    },
+    "0918273645abcdef": {
+      "path": "C:\\Users\\Steve\\Documents\\work-vault",
+      "ts": 1749000000000
+    },
+    "ffee00112233deadbeef": {
+      "path": "D:\\Vaults\\archive",
+      "ts": 1740000000000
+    },
+    "brokenentry": {
+      "ts": 1730000000000
+    }
+  },
+  "updater": { "channel": "stable" }
+}

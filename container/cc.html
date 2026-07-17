@@ -1,0 +1,527 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AgentHost — Command Center</title>
+<style>
+  /* Command Center: the combined 2+3 design Steve approved (2026-07-17).
+     A five-segment engine switcher (Claude/Hermes/Codex/Ollama/Terminal) with
+     inline live-status panels on top; the cross-engine activity feed below.
+     Everything renders from ONE fetch (GET /cc/state); every value that could
+     be missing (engine down, no usage yet) degrades to a quiet dash, never a
+     broken panel. Dev brand only -- the gate redirects legal boxes to /chat.
+     Same token fallbacks + glass rules as chat.html; theme.css (linked after)
+     wins when it loads. DOM is built textContent-only end to end: audit
+     details and Hermes/Ollama strings are untrusted input here. */
+  :root {
+    --base: #0B0D10; --surface: #14171B; --surface-2: #1A1E24;
+    --ink: #E8ECF0; --ink-2: #9BA3AE; --ink-3: #6B7280;
+    --accent: #FF6A3D; --accent-glow: rgba(255, 106, 61, .14);
+    --ok: #2ECC71; --warn: #FFB020; --err: #FF5A5A;
+    --claude: #FF6A3D; --hermes: #2ECC71; --codex: #6EA8FE; --ollama: #C084FC; --term: #9BA3AE;
+    --glass-border: rgba(255, 255, 255, .16);
+    --glass-border-soft: rgba(255, 255, 255, .10);
+    --mono: ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --ease: cubic-bezier(.2, 0, .2, 1); --dur: 180ms; --dur-slow: 320ms;
+    --hdr-h: 42px;
+  }
+  * { box-sizing: border-box; }
+  html { height: 100%; }
+  body { margin: 0; height: 100%; height: 100dvh; background: var(--base); color: var(--ink);
+    font: 400 15px/1.45 var(--mono);
+    display: flex; flex-direction: column; overflow: hidden;
+    background:
+      radial-gradient(120% 60% at 50% -10%, var(--accent-glow), transparent 62%),
+      var(--base); }
+  ::selection { background: rgba(255, 106, 61, .30); }
+  button, a { -webkit-tap-highlight-color: transparent; cursor: pointer; }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---- header: glass layer 1 of 2 (same chrome as chat.html) ---- */
+  #hdr { flex: none;
+    min-height: calc(var(--hdr-h) + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    display: flex; align-items: center; gap: 8px;
+    padding-left: calc(12px + env(safe-area-inset-left));
+    padding-right: calc(10px + env(safe-area-inset-right));
+    background: rgba(11,13,16,.82);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border-soft);
+    font-weight: 600; font-size: 12px; user-select: none; }
+  #brand { letter-spacing: .02em; white-space: nowrap; flex: none; }
+  #brand .caret { color: var(--accent); }
+  #host { color: var(--ink-2); font-weight: 400; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
+  #dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok);
+    flex: none; animation: ah-breathe 3.2s var(--ease) infinite; }
+  #tabs { margin-left: auto; display: flex; border: 1px solid var(--glass-border);
+    border-radius: 999px; overflow-x: auto; overflow-y: hidden; flex: 0 1 auto; min-width: 0;
+    scrollbar-width: none; }
+  #tabs::-webkit-scrollbar { display: none; }
+  #tabs a { padding: 4px 13px; font: 600 11px var(--mono); text-decoration: none;
+    white-space: nowrap; flex: none;
+    color: var(--ink); opacity: .6; transition: opacity var(--dur) var(--ease); }
+  #tabs a:hover { opacity: .9; }
+  #tabs a.on { background: var(--accent-glow); color: var(--accent); opacity: 1; }
+  @media (max-width: 620px) { #host { display: none; } }
+  @media (max-width: 520px) {
+    #hdr { gap: 6px; padding-left: calc(10px + env(safe-area-inset-left));
+      padding-right: calc(8px + env(safe-area-inset-right)); }
+    #brand { font-size: 11px; flex: 0 1 auto; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; }
+    #tabs a { padding: 4px 9px; font-size: 10px; }
+  }
+  @media (max-width: 385px) { #hdr { gap: 5px; } #tabs a { padding: 4px 7px; } }
+
+  /* ---- the primary engine switcher (always visible) ---- */
+  #ccseg-wrap { flex: none; padding: 10px calc(12px + env(safe-area-inset-right)) 0 calc(12px + env(safe-area-inset-left)); }
+  #ccseg { display: flex; gap: 4px; padding: 4px; background: var(--surface);
+    border: 1px solid rgba(255,255,255,.08); border-radius: 14px; overflow-x: auto;
+    scrollbar-width: none; }
+  #ccseg::-webkit-scrollbar { display: none; }
+  /* flex-shrink 0: five segments don't all fit a 390px phone -- the bar
+     scrolls (overflow-x above) rather than crushing the last segment's label
+     into a wrap. */
+  #ccseg button { flex: 1 0 auto; min-width: 70px; display: flex; flex-direction: column; align-items: center;
+    gap: 4px; padding: 9px 6px 8px; border-radius: 10px; border: 0;
+    background: transparent; color: var(--ink-3); font: 600 11px var(--mono);
+    transition: background var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+  #ccseg button .row1 { display: flex; align-items: center; gap: 5px; }
+  #ccseg button .sd { width: 7px; height: 7px; border-radius: 999px; flex: none; }
+  #ccseg button[data-eng="claude"] .sd { background: var(--claude); }
+  #ccseg button[data-eng="hermes"] .sd { background: var(--hermes); }
+  #ccseg button[data-eng="codex"] .sd { background: var(--codex); }
+  #ccseg button[data-eng="ollama"] .sd { background: var(--ollama); }
+  #ccseg button[data-eng="term"] .sd { background: var(--term); }
+  #ccseg button .sub { font: 400 9px var(--mono); color: var(--ink-3); letter-spacing: .02em; }
+  #ccseg button.active { background: var(--surface-2); color: var(--ink); }
+  #ccseg button.active[data-eng="claude"] { box-shadow: inset 0 0 0 1px rgba(255,106,61,.4), 0 0 12px rgba(255,106,61,.10); }
+  #ccseg button.active[data-eng="hermes"] { box-shadow: inset 0 0 0 1px rgba(46,204,113,.4), 0 0 12px rgba(46,204,113,.10); }
+  #ccseg button.active[data-eng="codex"]  { box-shadow: inset 0 0 0 1px rgba(110,168,254,.4), 0 0 12px rgba(110,168,254,.10); }
+  #ccseg button.active[data-eng="ollama"] { box-shadow: inset 0 0 0 1px rgba(192,132,252,.4), 0 0 12px rgba(192,132,252,.10); }
+  #ccseg button.active[data-eng="term"]   { box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); }
+
+  /* ---- one scroll surface: active panel, then the feed ---- */
+  #scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 12px calc(12px + env(safe-area-inset-right)) 24px calc(12px + env(safe-area-inset-left));
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.16) transparent; }
+  #scroll::-webkit-scrollbar { width: 5px; }
+  #scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 999px; }
+
+  .panel { display: none; animation: ah-rise var(--dur-slow) var(--ease) both; }
+  .panel.show { display: block; }
+
+  .phead { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .phead .pdot { width: 9px; height: 9px; border-radius: 999px; }
+  .phead .pname { font: 700 14px var(--mono); }
+  .phead .pbadge { margin-left: auto; font: 700 9.5px var(--mono); letter-spacing: .07em;
+    text-transform: uppercase; padding: 4px 9px; border-radius: 999px;
+    color: var(--ink-3); background: rgba(255,255,255,.05); }
+  .pbadge.ok { color: var(--ok); background: rgba(46,204,113,.12); }
+  .pbadge.busy { color: var(--warn); background: rgba(255,176,32,.12); }
+  .pbadge.err { color: var(--err); background: rgba(255,90,90,.12); }
+
+  .pcard { background: var(--surface); border: 1px solid rgba(255,255,255,.07);
+    border-radius: 14px; padding: 12px 14px; margin-bottom: 10px;
+    box-shadow: inset 0 1px 0 var(--glass-border-soft); }
+  .pline { display: flex; align-items: baseline; gap: 8px; padding: 5px 0;
+    border-top: 1px solid rgba(255,255,255,.04); }
+  .pline:first-child { border-top: 0; }
+  .pline .k { font: 400 10.5px var(--mono); color: var(--ink-3); text-transform: uppercase;
+    letter-spacing: .05em; flex: none; width: 92px; }
+  .pline .v { font: 400 12.5px var(--sans); color: var(--ink); word-break: break-word; min-width: 0; }
+  .pline .v.mono { font-family: var(--mono); font-size: 12px; }
+  .pline .v.dim { color: var(--ink-3); }
+
+  .prow-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .pbtn { flex: 1; text-align: center; padding: 10px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04);
+    color: var(--ink); font: 600 11.5px var(--mono); text-decoration: none;
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
+  .pbtn:hover { border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.07); }
+  .pbtn.primary { background: var(--accent); color: var(--base); border-color: transparent; }
+
+  /* Terminal panel: the real tmux windows, active one highlighted */
+  #termwins { display: flex; gap: 6px; flex-wrap: wrap; padding: 2px 0 4px; }
+  .twin { font: 600 10px var(--mono); padding: 5px 11px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.1); color: var(--ink-3); background: rgba(255,255,255,.03); }
+  .twin.active { color: var(--ink); border-color: rgba(255,255,255,.25); background: var(--surface-2); }
+
+  /* ---- activity feed ---- */
+  #feedhead { display: flex; align-items: baseline; gap: 8px; margin: 20px 2px 8px; }
+  #feedhead .fh { font: 600 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+  #refresh { margin-left: auto; border: 0; background: transparent; color: var(--ink-3);
+    font: 600 12px var(--mono); padding: 2px 6px; border-radius: 6px;
+    transition: color var(--dur) var(--ease); }
+  #refresh:hover { color: var(--ink); }
+
+  .item { display: flex; gap: 10px; padding: 10px 2px; position: relative; width: 100%;
+    text-align: left; border: 0; background: transparent; color: var(--ink); font: inherit;
+    animation: ah-rise var(--dur-slow) var(--ease) both;
+    border-radius: 10px; transition: background var(--dur) var(--ease); }
+  .item:hover { background: rgba(255,255,255,.03); }
+  .rail { flex: none; width: 20px; display: flex; flex-direction: column; align-items: center; }
+  .rail .fdot { width: 9px; height: 9px; border-radius: 999px; margin-top: 4px; flex: none; }
+  .rail .line { flex: 1; width: 1px; background: rgba(255,255,255,.08); margin-top: 4px; min-height: 10px; }
+  .item:last-child .rail .line { display: none; }
+  .content { flex: 1; min-width: 0; padding-bottom: 2px; }
+  .row1 { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; }
+  .who { font: 700 11.5px var(--mono); }
+  .what { font: 400 13px var(--sans); color: var(--ink); }
+  .time { margin-left: auto; font: 400 10px var(--mono); color: var(--ink-3); white-space: nowrap; flex: none; }
+  #feedempty { color: var(--ink-3); font: 400 12px var(--mono); text-align: center; padding: 22px 8px; }
+
+  @media (min-width: 900px) {
+    #ccseg-wrap, #scroll { max-width: 780px; margin-left: auto; margin-right: auto; width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .panel, .item, #dot { animation: none !important; }
+    #ccseg button, .pbtn, #tabs a { transition: none; }
+  }
+</style>
+<link rel="stylesheet" href="/theme.css">
+<script defer src="/agenthost-nav.js?v=1"></script>
+</head>
+<body>
+<div id="hdr">
+  <span id="dot"></span>
+  <span id="brand">agenthost <span class="caret">▎</span></span>
+  <span id="host"></span>
+  <nav id="tabs" data-slot="nav"></nav>
+</div>
+
+<div id="ccseg-wrap">
+  <div id="ccseg" role="tablist" aria-label="engine">
+    <button type="button" data-eng="claude" class="active">
+      <span class="row1"><span class="sd"></span>Claude</span>
+      <span class="sub" data-sub="claude">—</span>
+    </button>
+    <button type="button" data-eng="hermes">
+      <span class="row1"><span class="sd"></span>Hermes</span>
+      <span class="sub" data-sub="hermes">—</span>
+    </button>
+    <button type="button" data-eng="codex">
+      <span class="row1"><span class="sd"></span>Codex</span>
+      <span class="sub" data-sub="codex">—</span>
+    </button>
+    <button type="button" data-eng="ollama">
+      <span class="row1"><span class="sd"></span>Ollama</span>
+      <span class="sub" data-sub="ollama">—</span>
+    </button>
+    <button type="button" data-eng="term">
+      <span class="row1"><span class="sd"></span>Terminal</span>
+      <span class="sub" data-sub="term">—</span>
+    </button>
+  </div>
+</div>
+
+<div id="scroll">
+  <!-- Claude: two surfaces. Chat is where conversations live; "terminal
+       session" opens the interactive CLI in its own tmux window (lazy-created
+       by /switch), a SEPARATE scratch session from the chat thread. -->
+  <div class="panel show" data-panel="claude">
+    <div class="phead">
+      <span class="pdot" style="background:var(--claude)"></span>
+      <span class="pname">Claude</span>
+      <span class="pbadge ok">ready</span>
+    </div>
+    <div class="pcard">
+      <div class="pline"><span class="k">mode</span><span class="v mono">claude -p · subscription</span></div>
+      <div class="pline"><span class="k">last chat turn</span><span class="v" data-v="claude-last">—</span></div>
+      <div class="pline"><span class="k">today</span><span class="v mono" data-v="claude-today">—</span></div>
+    </div>
+    <div class="pcard">
+      <div class="pline"><span class="k">terminal</span><span class="v">Interactive `claude` in its own tmux window</span></div>
+      <div class="pline"><span class="k">thread</span><span class="v dim">Separate scratch session — it can never hijack the chat thread; resume chat from inside via the session picker</span></div>
+    </div>
+    <div class="prow-actions">
+      <a class="pbtn" href="/?window=claude">terminal session</a>
+      <a class="pbtn primary" href="/chat">open chat →</a>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="hermes">
+    <div class="phead">
+      <span class="pdot" style="background:var(--hermes)"></span>
+      <span class="pname">Hermes</span>
+      <span class="pbadge" data-badge="hermes">…</span>
+    </div>
+    <div class="pcard">
+      <div class="pline"><span class="k">model</span><span class="v mono">GLM-5.2 · local Ollama</span></div>
+      <div class="pline"><span class="k">dashboard</span><span class="v mono" data-v="hermes-dash">—</span></div>
+      <div class="pline"><span class="k">gateway</span><span class="v mono" data-v="hermes-gw">—</span></div>
+      <div class="pline"><span class="k">last chat turn</span><span class="v" data-v="hermes-last">—</span></div>
+      <div class="pline"><span class="k">today</span><span class="v mono" data-v="hermes-today">—</span></div>
+    </div>
+    <div class="prow-actions">
+      <a class="pbtn primary" href="/hermes/">open dashboard →</a>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="codex">
+    <div class="phead">
+      <span class="pdot" style="background:var(--codex)"></span>
+      <span class="pname">Codex</span>
+      <span class="pbadge" data-badge="codex">…</span>
+    </div>
+    <div class="pcard">
+      <div class="pline"><span class="k">auth</span><span class="v mono">ChatGPT plan</span></div>
+      <div class="pline"><span class="k">window</span><span class="v" data-v="codex-win">—</span></div>
+      <div class="pline"><span class="k">last chat turn</span><span class="v" data-v="codex-last">—</span></div>
+      <div class="pline"><span class="k">today</span><span class="v mono" data-v="codex-today">—</span></div>
+    </div>
+    <div class="prow-actions">
+      <a class="pbtn primary" href="/?window=codex">open terminal window →</a>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="ollama">
+    <div class="phead">
+      <span class="pdot" style="background:var(--ollama)"></span>
+      <span class="pname">Ollama</span>
+      <span class="pbadge" data-badge="ollama">…</span>
+    </div>
+    <div class="pcard">
+      <div class="pline"><span class="k">loaded</span><span class="v mono" data-v="ollama-loaded">—</span></div>
+      <div class="pline"><span class="k">models pulled</span><span class="v mono" data-v="ollama-pulled">—</span></div>
+      <div class="pline"><span class="k">endpoint</span><span class="v mono dim">127.0.0.1:11434 · loopback only</span></div>
+    </div>
+    <div class="prow-actions">
+      <a class="pbtn primary" href="/?window=ollama">open terminal window →</a>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="term">
+    <div class="phead">
+      <span class="pdot" style="background:var(--term)"></span>
+      <span class="pname">Terminal</span>
+      <span class="pbadge" data-badge="term">…</span>
+    </div>
+    <div class="pcard">
+      <div class="pline"><span class="k">session</span><span class="v mono">tmux · shared "agent" session</span></div>
+      <div class="pline" style="display:block">
+        <span class="k" style="display:block;margin-bottom:6px">windows</span>
+        <span id="termwins"><span class="v dim">—</span></span>
+      </div>
+    </div>
+    <div class="prow-actions">
+      <a class="pbtn primary" href="/">open full terminal →</a>
+    </div>
+  </div>
+
+  <div id="feedhead">
+    <span class="fh">Activity</span>
+    <button id="refresh" type="button" aria-label="refresh">↻</button>
+  </div>
+  <div id="feed"><div id="feedempty">loading…</div></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  document.getElementById("host").textContent = location.hostname;
+
+  var ENGINES = {
+    claude: { name: "Claude", color: "var(--claude)" },
+    hermes: { name: "Hermes", color: "var(--hermes)" },
+    codex:  { name: "Codex",  color: "var(--codex)" },
+    board:  { name: "Board",  color: "var(--ink-2)" },
+    loops:  { name: "Loops",  color: "var(--warn)" },
+  };
+  // Feed rows for these engines jump to a panel; board/loops rows don't have one.
+  var PANEL_FOR = { claude: "claude", hermes: "hermes", codex: "codex" };
+
+  var seg = document.getElementById("ccseg");
+  var panels = document.querySelectorAll(".panel");
+  function selectEngine(id) {
+    Array.prototype.forEach.call(seg.querySelectorAll("button"), function (b) {
+      b.classList.toggle("active", b.getAttribute("data-eng") === id);
+    });
+    Array.prototype.forEach.call(panels, function (p) {
+      p.classList.toggle("show", p.getAttribute("data-panel") === id);
+    });
+  }
+  seg.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-eng]");
+    if (b) selectEngine(b.getAttribute("data-eng"));
+  });
+
+  function fmtTok(n) {
+    if (!Number.isFinite(n) || n <= 0) return "0";
+    if (n < 1000) return String(n);
+    if (n < 1e6) return (n / 1e3).toFixed(n < 1e4 ? 1 : 0) + "K";
+    return (n / 1e6).toFixed(1) + "M";
+  }
+  function fmtUsd(c) {
+    if (!Number.isFinite(c) || c <= 0) return "";
+    return c < 0.005 ? "<$0.01" : "$" + c.toFixed(2);
+  }
+  function relTime(ms) {
+    if (!ms) return "";
+    var s = Math.max(0, (Date.now() - ms) / 1000);
+    if (s < 60) return "just now";
+    if (s < 3600) return Math.round(s / 60) + " min ago";
+    if (s < 86400) return Math.round(s / 3600) + "h ago";
+    return Math.round(s / 86400) + "d ago";
+  }
+  function setV(key, text, dim) {
+    var el = document.querySelector('[data-v="' + key + '"]');
+    if (!el) return;
+    el.textContent = text;
+    el.classList.toggle("dim", Boolean(dim));
+  }
+  function setSub(id, text) {
+    var el = document.querySelector('[data-sub="' + id + '"]');
+    if (el) el.textContent = text;
+  }
+  function setBadge(id, text, tone) {
+    var el = document.querySelector('[data-badge="' + id + '"]');
+    if (!el) return;
+    el.textContent = text;
+    el.className = "pbadge" + (tone ? " " + tone : "");
+  }
+  function usageLine(u) {
+    if (!u) return "no runs yet";
+    var tok = (u.in || 0) + (u.out || 0);
+    var s = fmtTok(tok) + " tok · " + (u.turns || 0) + (u.turns === 1 ? " turn" : " turns");
+    var usd = fmtUsd(u.cost);
+    if (usd) s = usd + " · " + s;
+    return s;
+  }
+
+  function render(st) {
+    var use = st.usage || {};
+
+    // Claude
+    setV("claude-last", use.claude && use.claude.at ? relTime(use.claude.at) : "no chat turns today", !(use.claude && use.claude.at));
+    setV("claude-today", usageLine(use.claude));
+    setSub("claude", "ready");
+
+    // Hermes
+    var h = st.hermes;
+    if (h) {
+      setV("hermes-dash", "up" + (h.version ? " · v" + h.version : "") + (h.activeSessions ? " · " + h.activeSessions + " active" : ""));
+      var gw = h.gatewayRunning ? "running" : (h.gatewayState === "startup_failed" ? "failed to start" : "not running");
+      setV("hermes-gw", gw, !h.gatewayRunning);
+      if (h.gatewayState === "startup_failed") setBadge("hermes", "gateway error", "err");
+      else setBadge("hermes", "up", "ok");
+      setSub("hermes", h.gatewayState === "startup_failed" ? "error" : "up");
+    } else {
+      setV("hermes-dash", "not responding", true);
+      setV("hermes-gw", "—", true);
+      setBadge("hermes", "down", "err");
+      setSub("hermes", "down");
+    }
+    setV("hermes-last", use.hermes && use.hermes.at ? relTime(use.hermes.at) : "no chat turns today", !(use.hermes && use.hermes.at));
+    setV("hermes-today", usageLine(use.hermes));
+
+    // Codex
+    var wins = Array.isArray(st.windows) ? st.windows : null;
+    var codexWin = wins && wins.some(function (w) { return w.name === "codex"; });
+    setV("codex-win", codexWin ? 'tmux window "codex" open' : "—", !codexWin);
+    setV("codex-last", use.codex && use.codex.at ? relTime(use.codex.at) : "no chat turns today", !(use.codex && use.codex.at));
+    setV("codex-today", usageLine(use.codex));
+    setBadge("codex", codexWin ? "window open" : "idle", codexWin ? "ok" : "");
+    setSub("codex", codexWin ? "open" : "idle");
+
+    // Ollama
+    var o = st.ollama || {};
+    setV("ollama-loaded", o.loaded && o.loaded.length ? o.loaded.join(", ") : (o.up ? "none loaded" : "—"), !(o.loaded && o.loaded.length));
+    setV("ollama-pulled", o.pulled === null || o.pulled === undefined ? "—" : String(o.pulled), o.pulled === null);
+    setBadge("ollama", o.up ? "serving" : "down", o.up ? "ok" : "err");
+    setSub("ollama", o.up ? "serving" : "down");
+
+    // Terminal
+    var tw = document.getElementById("termwins");
+    tw.textContent = "";
+    if (wins && wins.length) {
+      wins.forEach(function (w) {
+        var s = document.createElement("span");
+        s.className = "twin" + (w.active ? " active" : "");
+        s.textContent = w.name;
+        tw.appendChild(s);
+      });
+      var active = wins.find(function (w) { return w.active; });
+      setBadge("term", active ? "tmux: " + active.name : "up", "ok");
+      setSub("term", wins.length + (wins.length === 1 ? " window" : " windows"));
+    } else {
+      var d = document.createElement("span");
+      d.className = "v dim";
+      d.textContent = "tmux not reachable";
+      tw.appendChild(d);
+      setBadge("term", "down", "err");
+      setSub("term", "down");
+    }
+
+    // Feed
+    var feed = document.getElementById("feed");
+    feed.textContent = "";
+    var items = Array.isArray(st.feed) ? st.feed : [];
+    if (!items.length) {
+      var empty = document.createElement("div");
+      empty.id = "feedempty";
+      empty.textContent = "nothing yet today — activity across every engine lands here";
+      feed.appendChild(empty);
+      return;
+    }
+    items.forEach(function (ev) {
+      var eng = ENGINES[ev.eng] || { name: ev.eng || "?", color: "var(--ink-3)" };
+      var item = document.createElement(PANEL_FOR[ev.eng] ? "button" : "div");
+      if (PANEL_FOR[ev.eng]) item.type = "button";
+      item.className = "item";
+      var rail = document.createElement("span");
+      rail.className = "rail";
+      var fd = document.createElement("span");
+      fd.className = "fdot";
+      fd.style.background = eng.color;
+      rail.appendChild(fd);
+      var line = document.createElement("span");
+      line.className = "line";
+      rail.appendChild(line);
+      item.appendChild(rail);
+      var content = document.createElement("span");
+      content.className = "content";
+      var row1 = document.createElement("span");
+      row1.className = "row1";
+      var who = document.createElement("span");
+      who.className = "who";
+      who.style.color = eng.color;
+      who.textContent = eng.name;
+      row1.appendChild(who);
+      var what = document.createElement("span");
+      what.className = "what";
+      what.textContent = ev.what || "";
+      row1.appendChild(what);
+      var time = document.createElement("span");
+      time.className = "time";
+      time.textContent = relTime(ev.at);
+      row1.appendChild(time);
+      content.appendChild(row1);
+      item.appendChild(content);
+      if (PANEL_FOR[ev.eng]) {
+        item.addEventListener("click", function () {
+          selectEngine(PANEL_FOR[ev.eng]);
+          document.getElementById("scroll").scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+      feed.appendChild(item);
+    });
+  }
+
+  function refresh() {
+    fetch("/cc/state?tz=" + (-new Date().getTimezoneOffset()), { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (st) { if (st) render(st); })
+      .catch(function () {});
+  }
+  document.getElementById("refresh").addEventListener("click", refresh);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") refresh();
+  });
+  refresh();
+})();
+</script>
+</body>
+</html>

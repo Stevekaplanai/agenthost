@@ -1,0 +1,202 @@
+/* container/theme.css — AgentHost Liquid Glass design core.
+   One token set + component vocabulary shared by every gate-served screen
+   (login, chat, cron, 2fa, audit). The terminal page injects its own matching
+   values via appshell.js (it can't rely on a stylesheet fetch mid-boot).
+   Constraints from docs/design-brief.md: base #0B0D10 never pure black,
+   single vermilion accent, blur <=20px desktop / 12px mobile, 2-3 glass
+   layers per screen, no WebGL. Zero dependencies — hand-rolled on purpose. */
+
+:root {
+  --base: #0B0D10;
+  --surface: #14171B;
+  --surface-2: #1A1E24;
+  --ink: #E8ECF0;
+  --ink-2: #9BA3AE;
+  --ink-3: #6B7280;
+  --accent: #FF6A3D;
+  --accent-dim: #C94F28;
+  --accent-glow: rgba(255, 106, 61, .14);
+  --ok: #2ECC71;
+  --warn: #FFB020;
+  --err: #FF5A5A;
+  --glass-border: rgba(255, 255, 255, .16);
+  --glass-border-soft: rgba(255, 255, 255, .10);
+  --mono: ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+  --sans: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Heading face. Dev = mono (today's look, unchanged); the legal brand
+     re-points this at a serif stack. Anything that wants "display type"
+     uses var(--display) and relights automatically. */
+  --display: var(--mono);
+  --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-pill: 999px;
+  --blur: 12px;
+  --ease: cubic-bezier(.2, 0, .2, 1);
+  --dur: 180ms; --dur-slow: 320ms;
+}
+@media (min-width: 900px) { :root { --blur: 18px; } }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background:
+    radial-gradient(120% 60% at 50% -10%, var(--accent-glow), transparent 62%),
+    var(--base);
+  color: var(--ink);
+  font: 400 15px/1.5 var(--mono);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: var(--display); }
+
+/* ==== Legal brand ("Legal Skills HQ") =====================================
+   The gate stamps <body data-brand="legal"> on every page it serves when the
+   box was deployed with --legal (LEGAL_MODE secret). This block re-assigns
+   the SAME custom properties the components above consume, so every screen
+   relights automatically: light paper ground, dark ink, navy primary
+   actions, bronze highlights, serif display type. Tokens vendored from
+   site-legal/tokens.css (the lawyer-facing site) -- change there first.
+   Contrast: dark ink (#1C2733) on paper (#FBFAF7) is ~13.9:1. */
+[data-brand="legal"] {
+  /* Values match chat.html's inline fallback block exactly, so the paint is
+     identical before and after this sheet loads. */
+  --base: #FBFAF7;         /* paper */
+  --surface: #F3F1EA;      /* paper-sink: inputs, inset panels */
+  --surface-2: #EDEAE0;
+  --ink: #1C2733;
+  --ink-2: #3D4A57;
+  --ink-3: #5A6673;
+  --accent: #16324F;       /* navy = primary actions */
+  --accent-dim: #0F2438;
+  --accent-glow: rgba(22, 50, 79, .10);
+  --bronze: #8C6A3F;       /* highlights, never the primary button */
+  --bronze-tint: #F0E9DD;
+  --ok: #2F7D5B;
+  --warn: #B07A16;
+  --err: #B0392F;
+  --glass-border: rgba(28, 39, 51, .18);
+  --glass-border-soft: rgba(28, 39, 51, .10);
+  --display: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+}
+/* Kill the dark radial glow: a subtle warm paper wash instead. Reading
+   surfaces drop the terminal mono for the sans stack -- mono stays for
+   code/terminal content only. */
+body[data-brand="legal"] {
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(140, 106, 63, .07), transparent 62%),
+    var(--base);
+  font-family: var(--sans);
+}
+/* Flat paper surfaces: hairline rules, not glass glow. The white-inset
+   highlights and heavy black drop shadow of the dark theme read as smudges
+   on paper, so cards flatten to white + rule + a faint ink shadow. */
+[data-brand="legal"] .ah-glass {
+  background: #FFFFFF;    /* cards are white on paper (site: --surface-card) */
+  border-color: var(--glass-border);
+  box-shadow: 0 1px 2px rgba(28, 39, 51, .05), 0 16px 36px -24px rgba(28, 39, 51, .30);
+}
+[data-brand="legal"] .ah-btn-primary { color: var(--base); } /* paper on navy */
+[data-brand="legal"] .ah-btn-ghost { background: var(--surface-2); border-color: var(--glass-border); }
+[data-brand="legal"] .ah-btn-ghost:hover { border-color: var(--bronze); }
+[data-brand="legal"] .ah-input { border-color: #D3CDBE; } /* rule-strong: white-on-white otherwise */
+[data-brand="legal"] .ah-chip.accent { color: var(--bronze); background: var(--bronze-tint); }
+[data-brand="legal"] .ah-chip.ok { background: #E7F0EA; }
+[data-brand="legal"] .ah-chip.warn { background: #F6EED9; }
+[data-brand="legal"] .ah-chip.err { background: #F5E4E2; }
+[data-brand="legal"] .ah-toast {
+  box-shadow: 0 12px 32px -12px rgba(28, 39, 51, .35);
+}
+
+/* ---- Glass card (layer 1 of the blur budget) ---- */
+.ah-glass {
+  position: relative;
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,.10), rgba(255,255,255,.015) 48%),
+    rgba(232, 236, 240, .06);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  box-shadow:
+    inset 0 1.5px 1px rgba(255,255,255,.5),
+    inset 0 -1px 1px rgba(255,255,255,.1),
+    inset 0 0 22px rgba(255,255,255,.045),
+    0 24px 50px -16px rgba(0,0,0,.72);
+  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--blur));
+}
+
+/* ---- Buttons ---- */
+.ah-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; border-radius: var(--r-pill); cursor: pointer;
+  font: 600 15px var(--mono); padding: 10px 20px;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.ah-btn:active { transform: scale(.97); }
+.ah-btn-primary {
+  background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0) 55%), var(--accent);
+  color: var(--base);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 1px rgba(0,0,0,.18);
+}
+.ah-btn-primary:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 1px rgba(0,0,0,.18), 0 6px 22px -6px var(--accent); }
+.ah-btn-ghost {
+  background: rgba(255,255,255,.05);
+  color: var(--ink);
+  border: 1px solid var(--glass-border);
+}
+.ah-btn-ghost:hover { border-color: rgba(255,255,255,.3); }
+
+/* ---- Inputs ---- */
+.ah-input {
+  width: 100%; background: var(--surface);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: var(--r-pill); color: var(--ink);
+  padding: 10px 16px; font: inherit; font-size: 16px; outline: none;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.ah-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.ah-input::placeholder { color: var(--ink-3); }
+
+/* ---- Status dot: one visual language everywhere.
+   live = calm green breathing; busy = amber pulse; down = static red. ---- */
+.ah-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none;
+  animation: ah-breathe 3.2s var(--ease) infinite; }
+.ah-dot.busy { background: var(--warn); animation: ah-pulse 1.1s var(--ease) infinite; }
+.ah-dot.down { background: var(--err); animation: none; }
+@keyframes ah-breathe { 0%,100% { box-shadow: 0 0 0 0 rgba(46,204,113,.5); } 50% { box-shadow: 0 0 0 5px rgba(46,204,113,0); } }
+@keyframes ah-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,176,32,.55); } 50% { box-shadow: 0 0 0 6px rgba(255,176,32,0); } }
+
+/* ---- Entrance + streaming motion ---- */
+@keyframes ah-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.ah-rise { animation: ah-rise var(--dur-slow) var(--ease) both; }
+@keyframes ah-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+.ah-shimmer {
+  background-image: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.08) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: ah-shimmer 1.6s linear infinite;
+}
+@keyframes ah-shake { 0%,100% { transform: none; } 20%,60% { transform: translateX(-7px); } 40%,80% { transform: translateX(7px); } }
+.ah-shake { animation: ah-shake 340ms var(--ease); }
+
+/* ---- Toast (link copied, job saved, ...) ---- */
+.ah-toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  background: var(--surface-2); color: var(--ink);
+  border: 1px solid var(--glass-border); border-radius: var(--r-pill);
+  padding: 10px 20px; font: 600 13.5px var(--mono);
+  box-shadow: 0 12px 32px -8px rgba(0,0,0,.7);
+  animation: ah-rise var(--dur-slow) var(--ease) both;
+  z-index: 300;
+}
+
+/* ---- Chip: run states, badges ---- */
+.ah-chip { display: inline-flex; align-items: center; gap: 6px; font: 700 11px/1 var(--mono);
+  letter-spacing: .05em; text-transform: uppercase; border-radius: var(--r-pill); padding: 5px 11px; }
+.ah-chip.ok { color: var(--ok); background: rgba(46,204,113,.12); }
+.ah-chip.err { color: var(--err); background: rgba(255,90,90,.12); }
+.ah-chip.warn { color: var(--warn); background: rgba(255,176,32,.12); }
+.ah-chip.accent { color: var(--accent); background: var(--accent-glow); }
+
+/* Reduced motion: keep state, drop theatrics. */
+@media (prefers-reduced-motion: reduce) {
+  .ah-rise, .ah-shimmer, .ah-dot, .ah-toast { animation: none !important; }
+  .ah-btn { transition: none; }
+}

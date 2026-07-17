@@ -1,0 +1,6 @@
+# Container scripts must stay LF or bash inside the image breaks on \r
+*.sh text eol=lf
+*.mjs text eol=lf
+Dockerfile text eol=lf
+*.toml text eol=lf
+*.ps1 text eol=crlf

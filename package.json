@@ -1,0 +1,42 @@
+{
+  "name": "agenthost-cli",
+  "version": "0.5.0",
+  "description": "Move your Claude Code agent harness to a 24/7 container in your own Fly.io account. No AgentHost backend -- your keys, your Fly account.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "agenthost": "bin/cli.js",
+    "agenthost-cli": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "scripts/pack.mjs",
+    "scripts/pack-lib.mjs",
+    "container",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "test:ui": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node test/ui/appshell.test.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Stevekaplanai/agenthost"
+  },
+  "homepage": "https://agenthost.space",
+  "keywords": [
+    "claude-code",
+    "ai-agent",
+    "fly.io",
+    "cli",
+    "terminal"
+  ],
+  "devDependencies": {
+    "playwright-core": "^1.61.1"
+  }
+}

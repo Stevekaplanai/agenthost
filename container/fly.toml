@@ -1,0 +1,32 @@
+# AgentHost app template. The CLI copies this and stamps the app name.
+app = "AGENTHOST_APP_NAME"
+primary_region = "iad"
+# OOM crash guard for the OLLAMA_LOCAL_MODEL mode: local inference on a small
+# box can spike past RAM on model load; swap absorbs the spike instead of
+# killing the machine. Idle cost is zero when nothing swaps (cloud-proxy
+# boxes). Top level only -- nesting under [[vm]] silently does nothing.
+swap_size_mb = 1024
+
+[build]
+  dockerfile = "Dockerfile"
+
+[mounts]
+  source = "data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"    # 24/7 is the whole point
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  # performance (dedicated CPU) so simultaneous agents -- a Claude turn while
+  # Hermes and Codex also run -- get real cores, not a throttled shared slice.
+  # 4GB holds the gate + ttyd + tmux baseline plus 2-3 concurrent agent
+  # processes. This is the multiagent-gateway box size; a single-agent box can
+  # drop back to shared-cpu-1x/2gb.
+  cpu_kind = "performance"
+  cpus = 2
+  memory = "4gb"

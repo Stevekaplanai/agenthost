@@ -1,0 +1,581 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AgentHost</title>
+<style>
+  /* Liquid Glass Loops -- the scheduled-agents board (docs/design-brief.md;
+     "Loops" is the customer-facing name in both brands, /cron endpoints and
+     field names are unchanged).
+     Layout + page skin only: shared tokens, keyframes and components come from
+     /theme.css (served pre-auth by the gate, linked AFTER this sheet so its
+     values win the cascade). The :root block below is a fallback so the page
+     stays legible if that fetch ever fails. Chrome rules hold: blur <=12px
+     mobile, solid paint under glass, ONE blurred layer here (the header) --
+     job cards are flat --surface so the blur budget stays intact. */
+  :root {
+    --base: #0B0D10; --surface: #14171B; --surface-2: #1A1E24;
+    --ink: #E8ECF0; --ink-2: #9BA3AE; --ink-3: #6B7280;
+    --accent: #FF6A3D; --accent-glow: rgba(255, 106, 61, .14);
+    --ok: #2ECC71; --warn: #FFB020; --err: #FF5A5A;
+    --glass-border: rgba(255, 255, 255, .16);
+    --glass-border-soft: rgba(255, 255, 255, .10);
+    --mono: ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+    --ease: cubic-bezier(.2, 0, .2, 1); --dur: 180ms; --dur-slow: 320ms;
+    --hdr-h: 42px;
+  }
+  /* Legal brand fallback tokens. The gate injects data-brand="legal" on the body tag
+     for legal deploys; theme.css's [data-brand="legal"] block (linked after
+     this sheet, same specificity) wins when it loads -- this block mirrors the
+     :root fallback above so a legal box stays legal-lit if that fetch fails. */
+  [data-brand="legal"] {
+    --base: #FBFAF7; --surface: #F3F1EA; --surface-2: #EDEAE0;
+    --ink: #1C2733; --ink-2: #3D4A57; --ink-3: #5A6673;
+    --accent: #16324F; --accent-glow: rgba(22, 50, 79, .10);
+    --glass-border: rgba(28, 39, 51, .18);
+    --glass-border-soft: rgba(28, 39, 51, .10);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--base); color: var(--ink);
+    font: 400 15px/1.45 var(--mono); }
+  body { background:
+    radial-gradient(120% 60% at 50% -10%, var(--accent-glow), transparent 62%),
+    var(--base); }
+  ::selection { background: rgba(255, 106, 61, .30); }
+  button { -webkit-tap-highlight-color: transparent; cursor: pointer; }
+  button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---- header: the single glass layer on this screen ---- */
+  #hdr { position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    height: calc(var(--hdr-h) + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    display: flex; align-items: center; gap: 8px;
+    padding-left: calc(12px + env(safe-area-inset-left));
+    padding-right: calc(10px + env(safe-area-inset-right));
+    background: rgba(11,13,16,.82);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border-soft);
+    font-weight: 600; font-size: 12px; user-select: none; }
+  #brand { letter-spacing: .02em; white-space: nowrap; flex: none; }
+  #brand .caret { color: var(--accent); }
+  #host { color: var(--ink-2); font-weight: 400; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
+  #dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok);
+    flex: none; transition: background var(--dur) var(--ease);
+    animation: ah-breathe 3.2s var(--ease) infinite; }
+  /* With 5+ apps the pills can outgrow a phone header: the bar shrinks and
+     scrolls horizontally instead of clipping pills (mirrors #ah-tabs). */
+  #tabs { margin-left: auto; display: flex; border: 1px solid var(--glass-border);
+    border-radius: 999px; overflow-x: auto; overflow-y: hidden; flex: 0 1 auto; min-width: 0; }
+  #tabs a { padding: 4px 13px; font: 600 11px var(--mono); text-decoration: none;
+    white-space: nowrap; flex: none;
+    color: var(--ink); opacity: .6; transition: opacity var(--dur) var(--ease); }
+  #tabs a:hover { opacity: .9; }
+  #tabs a.on { background: var(--accent-glow); color: var(--accent); opacity: 1; }
+
+  /* ---- phone-width fit, mirroring chat.html's header exactly: tabs are
+     PRIMARY navigation and never clip; the host label goes first, the brand
+     may ellipsize, and the page never scrolls horizontally. ---- */
+  @media (max-width: 620px) { #host { display: none; } }
+  @media (max-width: 520px) {
+    #hdr { gap: 6px; padding-left: calc(10px + env(safe-area-inset-left));
+      padding-right: calc(8px + env(safe-area-inset-right)); }
+    #brand { font-size: 11px; flex: 0 1 auto; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; }
+    #tabs a { padding: 4px 9px; font-size: 10px; }
+  }
+  @media (max-width: 385px) { #hdr { gap: 5px; } #tabs a { padding: 4px 7px; } }
+
+  /* ---- board ---- */
+  #main { position: fixed; left: 0; right: 0; overflow-y: auto;
+    top: calc(var(--hdr-h) + env(safe-area-inset-top)); bottom: 0;
+    -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    padding: 14px calc(12px + env(safe-area-inset-right))
+      calc(24px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+    display: flex; flex-direction: column; gap: 12px;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.16) transparent; }
+  #main::-webkit-scrollbar { width: 5px; }
+  #main::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 999px; }
+  #jobs { display: flex; flex-direction: column; gap: 10px; }
+  h1 { font: 600 22px/1.2 var(--mono); margin: 2px 2px 0; letter-spacing: .01em; }
+  #pgsub { margin: 0 2px 2px; font-size: 12.5px; color: var(--ink-2); }
+  h2 { font: 600 11px var(--mono); color: var(--ink-3); margin: 8px 2px 0;
+    text-transform: lowercase; letter-spacing: .06em; }
+
+  .card { border-radius: 16px; padding: 12px 13px; font-size: 14px;
+    background: radial-gradient(140% 100% at 50% 0%, rgba(255,255,255,.07), rgba(255,255,255,.01) 55%), var(--surface);
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: inset 0 1px 0 var(--glass-border-soft); }
+  .card.job { cursor: pointer; animation: ah-rise var(--dur-slow) var(--ease) both;
+    transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+  .card.job:hover { border-color: rgba(255,255,255,.24); }
+  .card.job:active { transform: scale(.995); }
+  .jname { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .jname span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .del { flex: none; border: 1px solid rgba(255,90,90,.45); background: none;
+    color: var(--err); font: 600 11px var(--mono); border-radius: 999px; padding: 4px 11px;
+    transition: background var(--dur) var(--ease), transform var(--dur) var(--ease); }
+  .del:hover { background: rgba(255,90,90,.12); }
+  .del:active { transform: scale(.95); }
+  .jmeta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px;
+    margin-top: 9px; font-size: 12px; color: var(--ink-2); }
+  .jcron { font: 600 12px var(--mono); color: var(--ink); letter-spacing: .04em;
+    background: var(--base); border: 1px solid var(--glass-border-soft);
+    border-radius: 7px; padding: 2px 7px; }
+  .jutc { font-size: 10px; color: var(--ink-3); letter-spacing: .08em; }
+  .jnext { font-weight: 600; color: var(--ink-2); }
+  .jnext.soon { color: var(--accent); }
+  .jwhen { color: var(--ink-3); }
+  .chev { margin-left: auto; color: var(--ink-3);
+    transition: transform var(--dur) var(--ease); }
+  .card.open .chev { transform: rotate(180deg); }
+
+  /* run history: state chip + expandable mono output panel */
+  .runs { margin-top: 10px; padding-top: 10px; cursor: default;
+    border-top: 1px dashed var(--glass-border-soft);
+    display: flex; flex-direction: column; gap: 8px;
+    animation: ah-rise var(--dur) var(--ease) both; }
+  .run { border: 1px solid var(--glass-border-soft); border-radius: 12px;
+    padding: 8px 10px; font-size: 12px; background: rgba(11,13,16,.5); }
+  .run.err { border-color: rgba(255,90,90,.5); } /* --err @ .5 */
+  .rmeta { display: flex; align-items: center; gap: 8px; color: var(--ink-2);
+    min-width: 0; }
+  .rmeta .ah-chip { flex: none; }
+  .rtxt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .run pre { margin: 8px 0 0; padding: 8px 10px; border-radius: 8px;
+    background: var(--base); border: 1px solid var(--glass-border-soft);
+    white-space: pre-wrap; word-break: break-word; color: var(--ink);
+    overflow-x: auto; max-height: 40vh; overflow-y: auto;
+    font: 400 12px/1.5 var(--mono);
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.16) transparent; }
+  .run pre::-webkit-scrollbar { width: 4px; height: 4px; }
+  .run pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 999px; }
+
+  /* loading skeletons (swapped out by the first render) */
+  .skel { height: 66px; border-radius: 16px;
+    background: radial-gradient(140% 100% at 50% 0%, rgba(255,255,255,.05), rgba(255,255,255,.01) 55%), var(--surface);
+    border: 1px solid var(--glass-border-soft); }
+
+  /* zero jobs: an invitation, not a void */
+  .empty { border: 1px dashed var(--glass-border); border-radius: 16px;
+    padding: 28px 18px; text-align: center;
+    animation: ah-rise var(--dur-slow) var(--ease) both; }
+  .empty-t { font-weight: 600; font-size: 14px; }
+  .empty-d { font-size: 12px; color: var(--ink-3); margin-top: 5px; }
+  .hint { align-self: center; color: var(--ink-3); font-size: 12px; padding: 4px;
+    text-align: center; max-width: 90%; }
+
+  /* ---- recipe row: tap a card to fill the add-a-loop form (the accent-
+     forward moment on the board; scrolls sideways inside its own container
+     so the page itself never scrolls horizontally) ---- */
+  #recipes { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 8px;
+    flex: none; /* a scroll container's flex min-height is 0 -- without this,
+      #main's column layout crushes the row and clips the cards */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.16) transparent; }
+  #recipes::-webkit-scrollbar { height: 4px; }
+  #recipes::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 999px; }
+  .recipe { flex: 0 0 236px; display: flex; flex-direction: column;
+    align-items: flex-start; gap: 7px; text-align: left;
+    border-radius: 16px; padding: 12px 13px; color: var(--ink);
+    font: inherit; font-size: 13px;
+    background:
+      radial-gradient(130% 120% at 12% 0%, var(--accent-glow), transparent 55%),
+      radial-gradient(140% 100% at 50% 0%, rgba(255,255,255,.06), rgba(255,255,255,.01) 55%),
+      var(--surface);
+    border: 1px solid rgba(255,106,61,.36);
+    box-shadow: inset 0 1px 0 var(--glass-border-soft);
+    transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+  .recipe:hover { border-color: rgba(255,106,61,.6); }
+  .recipe:active { transform: scale(.985); }
+  .rname { font-weight: 600; font-size: 14px; }
+  .rdesc { font-size: 11.5px; line-height: 1.5; color: var(--ink-2); }
+  .rcron { margin-top: auto; font: 600 11px var(--mono); color: var(--accent);
+    background: var(--accent-glow); border: 1px solid var(--glass-border-soft);
+    border-radius: 999px; padding: 3px 9px; letter-spacing: .04em; }
+
+  /* ---- legal skin: page-local touches the shared tokens can't express
+     (bronze chips, navy primary on white cards, serif headings). The bulk of
+     the relight rides the [data-brand="legal"] token overrides above / in
+     theme.css via the var() names. ---- */
+  [data-brand="legal"] #hdr { background: rgba(251,250,247,.88); }
+  [data-brand="legal"] #brand, [data-brand="legal"] h1 {
+    font-family: Georgia, 'Times New Roman', serif; letter-spacing: .01em; }
+  [data-brand="legal"] ::selection { background: rgba(140,106,63,.25); }
+  [data-brand="legal"] .card { background: #FFFFFF; border-color: #E4E0D6;
+    box-shadow: none; }
+  [data-brand="legal"] .recipe { background: #FFFFFF; border-color: #E4E0D6;
+    box-shadow: none; }
+  [data-brand="legal"] .recipe:hover { border-color: #8C6A3F; }
+  [data-brand="legal"] .rcron, [data-brand="legal"] .jcron {
+    color: #8C6A3F; background: #F0E9DD; border-color: #E4E0D6; }
+  [data-brand="legal"] .skel { background: #F3F1EA; border-color: #E4E0D6; }
+  [data-brand="legal"] .empty { border-color: #D3CDBE; }
+  [data-brand="legal"] .run { background: #F3F1EA; border-color: #E4E0D6; }
+  [data-brand="legal"] .run pre { background: #FFFFFF; border-color: #E4E0D6; }
+  [data-brand="legal"] input, [data-brand="legal"] textarea {
+    background: #FFFFFF; border-color: #E4E0D6; }
+  [data-brand="legal"] #add { color: #FFFFFF; } /* navy primary via --accent */
+
+  /* ---- add-job form ---- */
+  label { display: block; font-size: 12px; color: var(--ink-2); margin: 12px 2px 5px; }
+  #addcard label:first-child { margin-top: 0; }
+  input, textarea { width: 100%; background: var(--base);
+    border: 1px solid rgba(255,255,255,.14); color: var(--ink);
+    padding: 10px 15px; font: inherit; font-size: 16px; outline: none;
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+  input { border-radius: 999px; }
+  textarea { border-radius: 14px; resize: vertical; min-height: 84px; }
+  input:focus, textarea:focus { border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow); }
+  input::placeholder, textarea::placeholder { color: var(--ink-3); }
+  .btnrow { display: flex; gap: 8px; margin-top: 14px; }
+  #add { flex: 1; border: 0; border-radius: 999px; padding: 11px; color: var(--base);
+    font: 600 14px var(--mono);
+    background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0) 55%), var(--accent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 1px rgba(0,0,0,.18);
+    transition: box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease),
+      opacity var(--dur) var(--ease); }
+  #add:hover:not(:disabled) { box-shadow: inset 0 1px 0 rgba(255,255,255,.55),
+    inset 0 -1px 1px rgba(0,0,0,.18), 0 6px 22px -6px var(--accent); }
+  #add:active:not(:disabled) { transform: scale(.98); }
+  #add:disabled { opacity: .35; cursor: default; }
+  #ferr { color: var(--err); font-size: 12px; margin-top: 8px; display: none; }
+
+  /* desktop: the board reads as a centered column, not a stretched phone */
+  @media (min-width: 900px) {
+    #main { padding-left: max(12px, calc(50vw - 360px));
+      padding-right: max(12px, calc(50vw - 360px)); }
+  }
+
+  /* keep state, drop theatrics */
+  @media (prefers-reduced-motion: reduce) {
+    .card.job, .runs, .empty, #dot { animation: none !important; }
+    .chev, .card.job, .del, #add, .recipe, #tabs a, input, textarea { transition: none; }
+  }
+</style>
+<link rel="stylesheet" href="/theme.css">
+<script defer src="/agenthost-nav.js?v=1"></script>
+</head>
+<body>
+<div id="hdr">
+  <span id="dot"></span>
+  <span id="brand">agenthost <span class="caret">▎</span></span>
+  <span id="host"></span>
+  <nav id="tabs" data-slot="nav"></nav>
+</div>
+<div id="main">
+  <h1>Loops</h1>
+  <p id="pgsub">agents that run on schedule — while you sleep</p>
+  <h2>your loops</h2>
+  <div id="jobs" aria-busy="true"><div class="skel ah-shimmer"></div><div class="skel ah-shimmer"></div></div>
+  <h2>recipes — tap one to fill the form</h2>
+  <div id="recipes" role="list"></div>
+  <h2>add a loop (schedules run in UTC on the box; times below are your phone's)</h2>
+  <div class="card" id="addcard">
+    <label for="fname">name</label>
+    <input id="fname" type="text" maxlength="60" placeholder="Morning briefing">
+    <label for="fcron">cron expression (min hour dom mon dow, UTC)</label>
+    <input id="fcron" type="text" placeholder="0 11 * * *" autocapitalize="off" autocorrect="off">
+    <label for="fprompt">prompt</label>
+    <textarea id="fprompt" placeholder="what should the agent do?"></textarea>
+    <div class="btnrow">
+      <button id="add" type="button">add loop</button>
+    </div>
+    <div id="ferr" role="alert"></div>
+  </div>
+</div>
+<script>
+(function () {
+  "use strict";
+  document.getElementById("host").textContent = location.hostname;
+
+  // Brand: the gate injects data-brand="legal" on <body> for legal deploys.
+  // It picks the recipe set below and the lawyer-facing wordmark; the visual
+  // relight is pure CSS (tokens + the [data-brand="legal"] rules above).
+  var BRAND = document.body.getAttribute("data-brand") === "legal" ? "legal" : "dev";
+  if (BRAND === "legal") {
+    document.getElementById("brand").textContent = "Your private workspace";
+  }
+
+  var jobsEl = document.getElementById("jobs");
+  var fname = document.getElementById("fname");
+  var fcron = document.getElementById("fcron");
+  var fprompt = document.getElementById("fprompt");
+  var addBtn = document.getElementById("add");
+  var ferr = document.getElementById("ferr");
+
+  // countdown-ish phrasing for the next run; the absolute time sits beside it.
+  function untilText(iso) {
+    var mins = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
+    if (mins <= 0) return "now";
+    if (mins < 60) return "in " + mins + "m";
+    if (mins < 48 * 60) return "in " + Math.floor(mins / 60) + "h " + (mins % 60) + "m";
+    return "in " + Math.round(mins / 1440) + "d";
+  }
+
+  function toast(text) {
+    var t = document.createElement("div");
+    t.className = "ah-toast";
+    t.textContent = text;
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 2400);
+  }
+
+  function load() {
+    fetch("/cron/jobs").then(function (r) { return r.json(); }).then(function (d) {
+      render(d.jobs || []);
+    }).catch(function () {
+      jobsEl.innerHTML = "";
+      jobsEl.removeAttribute("aria-busy");
+      var h = document.createElement("div");
+      h.className = "hint";
+      h.textContent = "could not load loops -- check the connection and reload";
+      jobsEl.appendChild(h);
+    });
+  }
+
+  function render(jobs) {
+    jobsEl.innerHTML = "";
+    jobsEl.removeAttribute("aria-busy");
+    if (!jobs.length) {
+      var empty = document.createElement("div");
+      empty.className = "empty";
+      var t = document.createElement("div");
+      t.className = "empty-t";
+      t.textContent = "No loops yet";
+      var d = document.createElement("div");
+      d.className = "empty-d";
+      d.textContent = "give your box a 7am briefing -- loops run even when this page is closed";
+      empty.appendChild(t);
+      empty.appendChild(d);
+      jobsEl.appendChild(empty);
+      return;
+    }
+    jobs.forEach(function (job) {
+      var card = document.createElement("div");
+      card.className = "card job";
+
+      var row = document.createElement("div");
+      row.className = "jname";
+      var nm = document.createElement("span");
+      nm.textContent = job.name || "(unnamed)";
+      var del = document.createElement("button");
+      del.className = "del";
+      del.type = "button";
+      del.textContent = "delete";
+      del.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (!confirm('Delete loop "' + (job.name || job.id) + '"?')) return;
+        fetch("/cron/jobs/" + job.id, { method: "DELETE" }).then(load);
+      });
+      row.appendChild(nm);
+      row.appendChild(del);
+      card.appendChild(row);
+
+      var meta = document.createElement("div");
+      meta.className = "jmeta";
+      var cron = document.createElement("code");
+      cron.className = "jcron";
+      cron.title = "cron schedule (UTC)";
+      cron.textContent = job.cron;
+      var utc = document.createElement("span");
+      utc.className = "jutc";
+      utc.textContent = "UTC";
+      var next = document.createElement("span");
+      next.className = "jnext";
+      if (job.nextRunAt) {
+        next.textContent = "next " + untilText(job.nextRunAt);
+        if (new Date(job.nextRunAt).getTime() - Date.now() < 3600e3) next.classList.add("soon");
+      } else {
+        next.textContent = "never runs";
+      }
+      var chev = document.createElement("span");
+      chev.className = "chev";
+      chev.textContent = "▾";
+      meta.appendChild(cron);
+      meta.appendChild(utc);
+      meta.appendChild(next);
+      if (job.nextRunAt) {
+        var when = document.createElement("span");
+        when.className = "jwhen";
+        when.textContent = new Date(job.nextRunAt).toLocaleString();
+        meta.appendChild(when);
+      }
+      meta.appendChild(chev);
+      card.appendChild(meta);
+
+      var runs = null;
+      card.addEventListener("click", function () {
+        if (runs) { runs.remove(); runs = null; card.classList.remove("open"); return; }
+        card.classList.add("open");
+        runs = document.createElement("div");
+        runs.className = "runs";
+        runs.addEventListener("click", function (e) { e.stopPropagation(); });
+        var h = document.createElement("div");
+        h.className = "rmeta";
+        h.textContent = "loading runs…";
+        runs.appendChild(h);
+        card.appendChild(runs);
+        fetch("/cron/runs?job=" + encodeURIComponent(job.id))
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (!runs) return;
+            runs.innerHTML = "";
+            var list = d.runs || [];
+            if (!list.length) {
+              var e = document.createElement("div");
+              e.className = "rmeta";
+              e.textContent = "no runs yet";
+              runs.appendChild(e);
+              return;
+            }
+            list.forEach(function (run) {
+              var el = document.createElement("div");
+              var failed = run.skipped || run.error || (run.exit !== 0 && run.exit != null);
+              el.className = "run" + (failed ? " err" : "");
+              var m = document.createElement("div");
+              m.className = "rmeta";
+              var chip = document.createElement("span");
+              chip.className = "ah-chip " + (run.skipped ? "warn" : failed ? "err" : "ok");
+              chip.textContent = run.skipped ? "skipped" : failed ? "exit " + run.exit : "ok";
+              var txt = document.createElement("span");
+              txt.className = "rtxt";
+              txt.textContent = new Date(run.startedAt).toLocaleString() + " · " +
+                (run.skipped ? (run.error || "busy")
+                  : Math.round((run.ms || 0) / 1000) + "s" +
+                    (run.error ? " · " + run.error : ""));
+              txt.title = txt.textContent; // full text when ellipsized
+              m.appendChild(chip);
+              m.appendChild(txt);
+              el.appendChild(m);
+              if (run.output) {
+                var pre = document.createElement("pre");
+                pre.textContent = run.output;
+                el.appendChild(pre);
+              }
+              runs.appendChild(el);
+            });
+          });
+      });
+      jobsEl.appendChild(card);
+    });
+  }
+
+  // ---- recipes: tap fills the add-a-loop form (the old single-template
+  // #tmpl mechanism, one card per recipe). Minute-accurate local->UTC:
+  // half/quarter-hour timezones (India, Nepal) must still get 7:00 local,
+  // not 7:30 or 6:45 -- and a weekly loop shifts its UTC day-of-week when
+  // the conversion crosses midnight.
+  function localCron(hour, dow) {
+    var raw = hour * 60 + new Date().getTimezoneOffset();
+    var utcMin = ((raw % 1440) + 1440) % 1440;
+    var d = "*";
+    if (dow != null) {
+      var shift = raw < 0 ? -1 : raw >= 1440 ? 1 : 0;
+      d = String(((dow + shift) % 7 + 7) % 7);
+    }
+    return (utcMin % 60) + " " + Math.floor(utcMin / 60) + " * * " + d;
+  }
+  var RECIPES = {
+    dev: [
+      { name: "Morning briefing", cron: localCron(7),
+        desc: "reads memory + yesterday's commits, writes you a 12-line brief before you wake",
+        prompt: "Read your memory files and project memories, then run git log --since=yesterday in each repo under ~/work. Write a crisp morning briefing (max 12 lines): what changed yesterday, what is in flight, what you plan to do today, and anything that needs Steve's decision. Plain text, no preamble." },
+      { name: "PR babysitter", cron: "0 */2 * * *",
+        desc: "checks open PRs every 2 hours, summarizes failures and reviews",
+        prompt: "Check every open PR across the repos under ~/work (gh pr list / gh pr checks). Summarize in plain text: which PRs have failing checks and why (quote the failing step), which have new review comments awaiting a reply, and which are green and ready to merge. Skip PRs with no changes since the last check." },
+      { name: "Repo digest", cron: localCron(18),
+        desc: "a 6pm digest of what changed today across your repos",
+        prompt: "Run git log --since=midnight in each repo under ~/work. Write an end-of-day digest: what shipped today per repo (one line per meaningful change), anything reverted or still failing, and loose ends to pick up tomorrow. Plain text, max 15 lines." },
+      { name: "Dependency check", cron: localCron(9, 1),
+        desc: "Monday 9am report of outdated or vulnerable dependencies",
+        prompt: "For each repo under ~/work with a package.json, run npm outdated and npm audit. Report only what matters: security vulnerabilities first (with severity), then major-version lags on direct dependencies. End with the two upgrades you would do first and why. Plain text." },
+    ],
+    legal: [
+      { name: "Overnight compliance scan", cron: localCron(2),
+        desc: "checks your policies against current GDPR/CCPA guidance, leaves gap notes",
+        prompt: "Read the policy documents in the policies folder of your workspace. Compare them against current GDPR and CCPA/CPRA requirements as you know them, flagging anything stale or missing (retention language, data-subject rights, sale/share disclosures, breach-notification windows). Write gap notes: one bullet per gap, citing the policy section and the requirement it misses. These are drafts for attorney review, not legal advice." },
+      { name: "Deadline second-check", cron: localCron(5),
+        desc: "recomputes every tracked deadline against the calendar, flags drift",
+        prompt: "Read the deadlines and matters files in your workspace. Recompute each deadline from its trigger date and rule (court days vs calendar days, jurisdiction rules as noted in the matter file), then compare against the calendared date. Flag every mismatch or deadline inside the next 7 days, most urgent first. This is a second check for attorney review, not docketing advice." },
+      { name: "Daily filing digest", cron: localCron(7),
+        desc: "a 7am summary of yesterday's docket and filings folder",
+        prompt: "Look at everything added to the filings and docket folders in your workspace yesterday. Summarize per matter: what was filed or received, any response deadline it starts, and what needs attorney attention today. Plain text, most urgent matter first. Drafts for attorney review." },
+    ],
+  };
+  var recEl = document.getElementById("recipes");
+  RECIPES[BRAND].forEach(function (r) {
+    var card = document.createElement("button");
+    card.type = "button";
+    card.className = "recipe";
+    card.setAttribute("role", "listitem");
+    var n = document.createElement("span");
+    n.className = "rname";
+    n.textContent = r.name;
+    var d = document.createElement("span");
+    d.className = "rdesc";
+    d.textContent = r.desc;
+    var c = document.createElement("code");
+    c.className = "rcron";
+    c.title = "cron schedule (UTC)";
+    c.textContent = r.cron;
+    card.appendChild(n);
+    card.appendChild(d);
+    card.appendChild(c);
+    card.addEventListener("click", function () {
+      fname.value = r.name;
+      fcron.value = r.cron;
+      fprompt.value = r.prompt;
+      document.getElementById("addcard").scrollIntoView({
+        block: "nearest",
+        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
+    });
+    recEl.appendChild(card);
+  });
+
+  function showFormError(text) {
+    ferr.textContent = text;
+    ferr.style.display = "block";
+    ferr.classList.remove("ah-shake");
+    void ferr.offsetWidth; // restart the shake if it already played
+    ferr.classList.add("ah-shake");
+  }
+
+  addBtn.addEventListener("click", function () {
+    ferr.style.display = "none";
+    addBtn.disabled = true;
+    fetch("/cron/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: fname.value.trim(),
+        cron: fcron.value.trim(),
+        prompt: fprompt.value,
+        tzOffsetMin: -new Date().getTimezoneOffset(),
+      }),
+    }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        addBtn.disabled = false;
+        if (!res.ok) {
+          showFormError(res.d.error || "could not add loop");
+          return;
+        }
+        fname.value = ""; fcron.value = ""; fprompt.value = "";
+        toast("loop scheduled");
+        load();
+      })
+      .catch(function () {
+        addBtn.disabled = false;
+        showFormError("network error -- loop not added");
+      });
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Build context is container/. Keep only what the Dockerfile COPYs; everything
+# else (the staged fly.toml.deploy, stray files) just slows the upload.
+fly.toml
+fly.toml.deploy
+Dockerfile
+package.json
+*.md
