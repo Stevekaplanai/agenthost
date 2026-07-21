@@ -10,7 +10,7 @@
 npx agenthost-cli
 ```
 
-One command moves your local AI agent setup to a 24/7 box in **your own** Fly.io account. Skills, memory, CLAUDE.md, MCP servers, and your repos come with it. Your phone gets the live session.
+One command moves your local AI agent setup to a 24/7 box in **your own** cloud account. Skills, memory, CLAUDE.md, MCP servers, and your repos come with it. Your phone gets the live session.
 
 **Hosting is the mechanism. Continuity is the product.**
 
@@ -19,16 +19,16 @@ One command moves your local AI agent setup to a 24/7 box in **your own** Fly.io
 ## What it does
 
 - **Runs your agent 24/7** — survives lid-close, sleep, reboots. The box stays up; your context stays alive.
-- **Deploys to your cloud** — your Fly.io account, your keys, your data. No AgentHost backend.
+- **Deploys to your cloud** — your cloud account, your keys, your data. No AgentHost backend.
 - **Governs unattended runs** — budgets, human gates, cross-engine review, audit trails.
 - **Works from your phone** — monitor, approve, and steer agents from a mobile PWA.
 
 ## Quick start
 
 ```bash
-# 1. Deploy (detects ~/.claude, packs, creates Fly app, deploys)
+# 1. Deploy (detects ~/.claude, packs, creates your cloud app, deploys)
 npx agenthost-cli
-agenthost deploy --org <your-fly-org>
+agenthost deploy --org <your-cloud-org>
 
 # 2. Open on your phone
 agenthost open    # prints a login link
@@ -39,7 +39,7 @@ agenthost sync    # push local harness changes
 agenthost logs    # tail the box
 ```
 
-That's it. No AgentHost account, no AgentHost servers. Just your Fly account and your agent.
+That's it. No AgentHost account, no AgentHost servers. Just your cloud account and your agent.
 
 ## Why
 
@@ -51,10 +51,10 @@ AgentHost fixes this. Your agent lives on a box that doesn't sleep. You close yo
 
 ## Features
 
-- 🔄 **Persistent** — agents survive lid-close, sleep, reboots. Context, memory, and work state persist across sessions on a Fly volume.
+- 🔄 **Persistent** — agents survive lid-close, sleep, reboots. Context, memory, and work state persist across sessions on a persistent volume.
 - 🏛️ **Governed** — budgets, human gates, cross-engine review, and audit trails. You control what unattended agents can and can't do.
 - 📱 **Mobile** — monitor and approve from your phone. Installs as a PWA with touch-optimized keys.
-- 🔒 **BYO Cloud** — your Fly account, your keys, your data. No AgentHost backend. No third party sees your code.
+- 🔒 **BYO Cloud** — your cloud account, your keys, your data. No AgentHost backend. No third party sees your code.
 - 🧠 **Brain Search** — grep your skills, memory, and notes across all sessions. Find what your agent learned last week.
 - 🔁 **Loops** — scheduled agents that work while you sleep. Cron-like runs that fire on your box, not your laptop.
 
@@ -81,9 +81,9 @@ Cloud and model usage are always yours. No markup, no bundling.
 
 → **[Claim a founding seat →](https://agenthost.space/founders/)**
 
-## FAQ: Why not just script Fly yourself?
+## FAQ: Why not just script your cloud yourself?
 
-You can. The original AgentHost was a PowerShell script that did exactly that. But you'll end up rebuilding:
+You can. The original AgentHost was a script that did exactly that. But you'll end up rebuilding:
 
 - **Harness packing** — detecting `~/.claude`, redacting credentials, disabling localhost MCP servers
 - **Volume management** — persistent storage for skills, memory, and repos across redeploys
