@@ -97,7 +97,7 @@ export async function deployCommand(flags) {
     console.log(`\n[dry-run] would create/reuse app '${app}' in org '${org}' (${region})`);
     console.log(`[dry-run] would create/reuse volume 'data' (3GB, ${region})`);
     console.log(`[dry-run] would stage secrets: ${Object.keys(secrets).filter((k) => secrets[k] !== undefined).join(", ")}`);
-    console.log(`[dry-run] would run: flyctl deploy -a ${app} -c container/fly.toml.deploy --remote-only`);
+    console.log(`[dry-run] would run: flyctl deploy -a ${app} -c container/fly.toml.deploy --remote-only --ha=false`);
     console.log("[dry-run] no changes made to Fly.io");
     return { app, dryRun: true, manifest };
   }
@@ -132,6 +132,20 @@ export async function deployCommand(flags) {
   console.log(listing);
   if (staged.harnessAttached && !listing.includes("harness.tar.gz") && !listing.includes(".harness-extracted")) {
     console.log("WARNING: harness not visible on the volume (no tarball, no .harness-extracted marker); check `flyctl logs -a " + app + "`");
+  }
+
+  // A box must be exactly one machine on one volume. --ha=false keeps NEW apps
+  // single, but an app split by an earlier deploy stays split -- and the Fly
+  // proxy then bounces sessions between two different filesystems (files
+  // "vanish", logins reset). Say so loudly instead of leaving it haunted.
+  const machines = fly.machineIds(app);
+  if (machines.length > 1) {
+    console.log(`\nWARNING: app '${app}' is running ${machines.length} machines (${machines.join(", ")}).`);
+    console.log("A box must be exactly ONE machine on ONE volume -- multiple machines have separate");
+    console.log("volumes, so files and logins will differ between visits. Keep the machine whose");
+    console.log("volume holds your data and destroy the other:");
+    console.log(`  flyctl volumes list -a ${app}`);
+    console.log(`  flyctl machine destroy <extra-machine-id> -a ${app} --force`);
   }
 
   saveAppState(app, { org, region, ttydPassword, repos });

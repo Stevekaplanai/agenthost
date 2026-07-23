@@ -34,3 +34,14 @@ test("non-string values are stringified, keys preserved", () => {
   const m = buildSetSecretsMutation("app", [["N", 42]]);
   assert.deepEqual(m.variables.input.secrets, [{ key: "N", value: "42" }]);
 });
+
+// The single-machine invariant (2026-07-23 incident): a fresh app's first
+// deploy MUST pin to one machine, or Fly's HA default creates two machines
+// with two separate volumes and the box splits into two half-boxes.
+test("deployArgs pins the app to a single machine (--ha=false) and keeps the container build context", async () => {
+  const { deployArgs } = await import("../src/fly.js");
+  const args = deployArgs("agenthost-steve", "container/fly.toml.deploy");
+  assert.ok(args.includes("--ha=false"), "deploy must pin --ha=false (split-brain guard)");
+  assert.ok(args.includes("--remote-only"), "remote builds stay remote (no local Docker)");
+  assert.equal(args[1], "container", "build context must be the container/ dir, not the repo root");
+});

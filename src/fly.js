@@ -166,14 +166,27 @@ export function stageSecretsViaApi(app, pairsOrObj) {
   });
 }
 
-export async function deploy(app, configPath) {
+// Pure arg builder, split out so the single-machine invariant is unit-testable
+// without shelling out to flyctl.
+export function deployArgs(app, configPath) {
   // The Dockerfile COPYs bare filenames (entrypoint.sh, gate.js, ...), so the
   // build context MUST be container/, where those files live. flyctl's first
   // positional arg sets the working directory = build context; without it,
   // context defaults to the shell's cwd (the repo root) and every COPY fails
   // with "not found". configPath already lives in container/, so its dir is it.
   const contextDir = path.dirname(configPath);
-  return stream(["deploy", contextDir, "-a", app, "-c", configPath, "--remote-only"]);
+  // --ha=false: a box is exactly ONE machine on ONE volume. Without it, the
+  // first deploy of a fresh app follows Fly's HA default and creates TWO
+  // machines -- and because fly.toml has [mounts], flyctl auto-clones a SECOND
+  // volume for the second machine. The proxy then bounces sessions between two
+  // different filesystems: files/artifacts "vanish", logins reset every
+  // restart (per-machine gate.secret), and fixes appear not to stick. This bit
+  // a real box on 2026-07-23 and cost an evening of haunted debugging.
+  return ["deploy", contextDir, "-a", app, "-c", configPath, "--remote-only", "--ha=false"];
+}
+
+export async function deploy(app, configPath) {
+  return stream(deployArgs(app, configPath));
 }
 
 // Output-parsed, per the Windows lesson: never trust $LASTEXITCODE / exit code here.
