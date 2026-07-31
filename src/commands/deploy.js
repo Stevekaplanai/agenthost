@@ -45,7 +45,10 @@ export async function deployCommand(flags) {
   });
   console.log(`Packed ${manifest.files} files (${(manifest.bytes / 1024 / 1024).toFixed(1)} MB). Secrets redacted: ${manifest.redactedSecrets.length}.`);
   for (const p of manifest.packs || []) {
-    console.log(`Preloaded pack '${p.name}': ${p.skills.length} skill(s) (${p.skills.join(", ")}).`);
+    const parts = [`${p.skills.length} skill(s) (${p.skills.join(", ") || "none"})`];
+    if (p.agents?.length) parts.push(`${p.agents.length} agent(s) (${p.agents.join(", ")})`);
+    if (p.modeFiles?.length) parts.push(`mode files: ${p.modeFiles.join(", ")}`);
+    console.log(`Preloaded pack '${p.name}': ${parts.join(", ")}.`);
   }
   const disabled = manifest.mcp.filter((m) => m.verdict.startsWith("DISABLED")).length;
   if (disabled) console.log(`${disabled} MCP server(s) disabled (localhost-only, unreachable from the cloud).`);

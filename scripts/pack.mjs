@@ -384,30 +384,91 @@ for (const [label, p] of [
   }
 }
 
-// ---- curated skill packs (--pack <name>) -------------------------------------
-// Copied AFTER harness staging so a pack never overwrites the user's own skill
-// of the same name (user's harness wins; the collision is reported instead).
+// ---- curated packs (--pack <name>) -------------------------------------------
+// A pack ships skills/ AND agents/ AND its mode files (MODE.md, mode.toml) --
+// shipping only skills silently dropped every hat definition, so a mode pack
+// booted with zero agents (Growth Mode ARD, H1). Copied AFTER harness staging
+// so a pack never overwrites the user's own same-named skill or agent (user's
+// harness wins; the collision is reported) -- EXCEPT content the pack declares
+// critical in packs/<name>/pack.json ({ criticalSkills: [], criticalAgents: [] }):
+// silently skipping those would strip a gate-critical skill, so the pack
+// hard-fails instead, naming the collision.
 const REPO_ROOT_FOR_PACKS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packsLoaded = [];
-for (const name of packNames) {
-  if (!/^[a-z0-9-]+$/.test(name || "")) { report.flags.push(`--pack '${name}': invalid pack name (a-z, 0-9, -)`); continue; }
-  const packSkillsDir = path.join(REPO_ROOT_FOR_PACKS, "packs", name, "skills");
-  if (!fs.existsSync(packSkillsDir)) { report.flags.push(`--pack '${name}': not found (no packs/${name}/skills in this AgentHost install)`); continue; }
-  const loaded = [];
-  for (const ent of fs.readdirSync(packSkillsDir, { withFileTypes: true })) {
-    if (!ent.isDirectory()) continue;
-    const dest = path.join(STAGING, "skills", ent.name);
-    if (fs.existsSync(dest)) { report.flags.push(`pack '${name}': skill '${ent.name}' already exists in your harness -- yours kept, pack copy skipped`); continue; }
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.cpSync(path.join(packSkillsDir, ent.name), dest, { recursive: true });
-    loaded.push(ent.name);
+function stagePackEntry(src, dest, relLabel) {
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.cpSync(src, dest, { recursive: true });
+  if (fs.statSync(dest).isDirectory()) {
     for (const f of fs.readdirSync(dest, { recursive: true })) {
       const fp = path.join(dest, String(f));
-      if (fs.statSync(fp).isFile()) { report.fileCount++; report.totalBytes += fs.statSync(fp).size; report.included.push(path.join("skills", ent.name, String(f))); }
+      if (fs.statSync(fp).isFile()) { report.fileCount++; report.totalBytes += fs.statSync(fp).size; report.included.push(path.join(relLabel, String(f))); }
+    }
+  } else {
+    report.fileCount++; report.totalBytes += fs.statSync(dest).size; report.included.push(relLabel);
+  }
+}
+for (const name of packNames) {
+  if (!/^[a-z0-9-]+$/.test(name || "")) { report.flags.push(`--pack '${name}': invalid pack name (a-z, 0-9, -)`); continue; }
+  const packDir = path.join(REPO_ROOT_FOR_PACKS, "packs", name);
+  if (!fs.existsSync(packDir)) { report.flags.push(`--pack '${name}': not found (no packs/${name} in this AgentHost install)`); continue; }
+  let packMeta = {};
+  const packJson = path.join(packDir, "pack.json");
+  if (fs.existsSync(packJson)) {
+    try { packMeta = JSON.parse(fs.readFileSync(packJson, "utf8")); }
+    catch { console.error(`pack '${name}': pack.json is not valid JSON -- fix the pack before packing`); process.exit(1); }
+  }
+  const criticalSkills = new Set(packMeta.criticalSkills || []);
+  const criticalAgents = new Set(packMeta.criticalAgents || []);
+  const loaded = [], loadedAgents = [], modeFiles = [];
+
+  const packSkillsDir = path.join(packDir, "skills");
+  if (fs.existsSync(packSkillsDir)) {
+    for (const ent of fs.readdirSync(packSkillsDir, { withFileTypes: true })) {
+      if (!ent.isDirectory()) continue;
+      const dest = path.join(STAGING, "skills", ent.name);
+      if (fs.existsSync(dest)) {
+        if (criticalSkills.has(ent.name)) {
+          console.error(`pack '${name}': skill '${ent.name}' is critical to this pack but already exists in your harness. A silent skip would strip a gate-critical skill, so this pack refuses to load. Rename your skill or drop --pack ${name}.`);
+          process.exit(1);
+        }
+        report.flags.push(`pack '${name}': skill '${ent.name}' already exists in your harness -- yours kept, pack copy skipped`);
+        continue;
+      }
+      stagePackEntry(path.join(packSkillsDir, ent.name), dest, path.join("skills", ent.name));
+      loaded.push(ent.name);
     }
   }
-  packsLoaded.push({ name, skills: loaded });
-  console.log(`pack '${name}': preloaded ${loaded.length} skill(s): ${loaded.join(", ") || "(none)"}`);
+
+  // agents/ lands at .claude/agents/ -- the exact path the box roster reads
+  const packAgentsDir = path.join(packDir, "agents");
+  if (fs.existsSync(packAgentsDir)) {
+    for (const ent of fs.readdirSync(packAgentsDir, { withFileTypes: true })) {
+      const dest = path.join(STAGING, "agents", ent.name);
+      if (fs.existsSync(dest)) {
+        const agentName = ent.name.replace(/\.md$/, "");
+        if (criticalAgents.has(agentName) || criticalAgents.has(ent.name)) {
+          console.error(`pack '${name}': agent '${agentName}' is critical to this pack but already exists in your harness. Rename your agent or drop --pack ${name}.`);
+          process.exit(1);
+        }
+        report.flags.push(`pack '${name}': agent '${ent.name}' already exists in your harness -- yours kept, pack copy skipped`);
+        continue;
+      }
+      stagePackEntry(path.join(packAgentsDir, ent.name), dest, path.join("agents", ent.name));
+      loadedAgents.push(ent.name);
+    }
+  }
+
+  // Mode files land at .claude/modes/<name>/ -- the mode registry's read path
+  for (const mf of ["MODE.md", "mode.toml"]) {
+    const src = path.join(packDir, mf);
+    if (fs.existsSync(src)) {
+      stagePackEntry(src, path.join(STAGING, "modes", name, mf), path.join("modes", name, mf));
+      modeFiles.push(mf);
+    }
+  }
+
+  packsLoaded.push({ name, skills: loaded, agents: loadedAgents, modeFiles });
+  console.log(`pack '${name}': preloaded ${loaded.length} skill(s), ${loadedAgents.length} agent(s)${modeFiles.length ? `, mode files: ${modeFiles.join(", ")}` : ""}`);
 }
 
 const stalePathFiles = findStalePathFiles(STAGING_ROOT).files;
@@ -476,6 +537,11 @@ const lines = [
   "## Hooks removed from the cloud settings.json (could never run on the box; your local file is untouched)",
   ...(removedHooks.length ? removedHooks.map(h => `- ${h}`) : ["- none found"]),
   "",
+  ...(packsLoaded.length ? [
+    "## Packs",
+    ...packsLoaded.map(p => `- ${p.name}: ${p.skills.length} skill(s) [${p.skills.join(", ") || "none"}], ${p.agents.length} agent(s) [${p.agents.join(", ") || "none"}]${p.modeFiles.length ? `, mode files: ${p.modeFiles.join(", ")}` : ""}`),
+    "",
+  ] : []),
   ...(packHermes ? [
     "## Hermes",
     `Included from ~/.hermes: ${hermes.included.join(", ") || "none found"}`,
