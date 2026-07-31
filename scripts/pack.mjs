@@ -417,6 +417,14 @@ for (const name of packNames) {
     try { packMeta = JSON.parse(fs.readFileSync(packJson, "utf8")); }
     catch { console.error(`pack '${name}': pack.json is not valid JSON -- fix the pack before packing`); process.exit(1); }
   }
+  // Fail loud on a non-array critical field: new Set("name") is a set of
+  // CHARACTERS, which would silently disarm the hard-fail guard below.
+  for (const field of ["criticalSkills", "criticalAgents"]) {
+    if (packMeta[field] !== undefined && !Array.isArray(packMeta[field])) {
+      console.error(`pack '${name}': pack.json ${field} must be an array of names -- fix the pack before packing`);
+      process.exit(1);
+    }
+  }
   const criticalSkills = new Set(packMeta.criticalSkills || []);
   const criticalAgents = new Set(packMeta.criticalAgents || []);
   const loaded = [], loadedAgents = [], modeFiles = [];

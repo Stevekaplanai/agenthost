@@ -125,6 +125,21 @@ test("non-critical collision keeps the user's copy and reports the skip", (t) =>
   assert.ok(manifest.flags.some((f) => /media-auditor/.test(f) && /yours kept/.test(f)), "agent collision reported");
 });
 
+test("a non-array criticalSkills fails loud instead of silently disarming the guard", (t) => {
+  const packDir = makeFixturePack();
+  t.after(() => fs.rmSync(packDir, { recursive: true, force: true }));
+  // new Set("growth-content") is a set of characters -- has("growth-content")
+  // would never match, so a bare-string typo must be rejected outright
+  fs.writeFileSync(path.join(packDir, "pack.json"), JSON.stringify({ criticalSkills: "growth-content" }));
+  const home = makeHome("agenthost-mode-home6-");
+  t.after(() => fs.rmSync(home, { recursive: true, force: true }));
+
+  const { res, out } = runPack(home, ["--pack", FIXTURE_PACK]);
+  t.after(() => fs.rmSync(out, { recursive: true, force: true }));
+  assert.notEqual(res.status, 0, "non-array criticalSkills must fail the pack");
+  assert.match(res.stderr, /criticalSkills must be an array/, "failure names the malformed field");
+});
+
 test("a pack with agents but no skills dir still loads", (t) => {
   const packDir = makeFixturePack();
   t.after(() => fs.rmSync(packDir, { recursive: true, force: true }));
