@@ -4,9 +4,17 @@
 
 <br>
 
+<div align="center">
+
+**🚀 v2.0 — The Team Room** · **🍎 Mac now supported** · [Release notes](https://github.com/Stevekaplanai/agenthost/releases/tag/v2.0.0)
+
+</div>
+
+<br>
+
 > **Hosting is the mechanism. Continuity is the product.**
 
-One command moves your local AI agent setup to a 24/7 box in **your own** cloud account. Skills, memory, configs, MCP servers, and your repos come with it. Your phone gets the live session.
+One command moves your local AI agent setup to a 24/7 box in **your own** cloud account. Six agent engines — Claude, Codex, Gemini, Kimi, Cursor, and Hermes — coordinate in one shared room. Skills, memory, configs, MCP servers, and your repos come with it. Your phone gets the live session.
 
 ```bash
 npx agenthost-cli
