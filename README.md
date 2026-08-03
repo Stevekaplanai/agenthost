@@ -6,7 +6,7 @@
 
 <div align="center">
 
-**🚀 v2.0 — The Team Room** · **🍎 Mac now supported** · [Release notes](https://github.com/Stevekaplanai/agenthost/releases/tag/v2.0.0)
+**🧠 0.6.0 — The Brain + Growth Mode (preview)** · **Patent pending: the governance layer** (US provisional 64/122,926) · **🍎 Mac supported**
 
 </div>
 
@@ -46,6 +46,29 @@ AgentHost is a self-hosted command center for multi-agent engineering. Five AI e
 | 290+ Proof Tests | No Lock-in | Don't Move | Roadmap |
 
 </div>
+
+---
+
+## What's new in 0.6.0
+
+- **🧠 The Brain.** A persistent shared memory for your whole agent team: every
+  engine reads and writes durable, per-agent-keyed memories, with a visual panel
+  at `/brain` behind your login. Unconfigured boxes show clearly-labelled demo
+  data — never a blank page, never a fake success.
+- **📱 Chat survives your phone.** Locking your phone mid-reply no longer kills
+  the running agent, discards a finished answer, or wedges the round. Fixed at
+  all three layers.
+- **🔍 Failures name their own cause.** A skipped engine reports WHY, with the
+  actual stderr tail, instead of "run exited 1".
+- **📈 Growth Mode — preview.** A switch in Settings (off by default) that turns
+  the box toward outward-facing marketing work. The full agency offering is
+  separate: [gtmvp.com/growth-mode](https://www.gtmvp.com/growth-mode). Dev Mode
+  remains the default and the product.
+- **🔗 Causal ordering across machines.** Mesh messages are hash-chained and the
+  box refuses any message whose parent it has not recorded — enforcement, not
+  bookkeeping. Part of the patent-pending governance layer.
+- **🛡️ A regression guard.** The build fails on any NEW test failure instead of
+  quietly adding it to the pile.
 
 ---
 
