@@ -1,0 +1,16 @@
+---
+id: fe1e726c5454-reference-resend-scheduledat-30day-cap
+trigger: "When scheduling emails via Resend API"
+confidence: 0.8
+domain: "integration"
+source: "memory/C--Users-User-content-engine/reference_resend_scheduledat_30day_cap.md"
+scope: global
+---
+
+# Reference Resend Scheduledat 30Day Cap
+
+## Action
+Ensure the scheduled date is within 30 days to prevent silent immediate sending.
+
+## Evidence
+Seeded from memory/C--Users-User-content-engine/reference_resend_scheduledat_30day_cap.md via seed_instincts.py.

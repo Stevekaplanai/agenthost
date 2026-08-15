@@ -1,0 +1,442 @@
+{
+  "$schema": "agenthost-frontend-collapse-contract-v1",
+  "contractVersion": 1,
+  "baseline": {
+    "commit": "b53cf45893b2b8f86d179097478e9708fed12516",
+    "branch": "codex/frontend-collapse-step0",
+    "recordedAt": "2026-08-08T15:15:00-04:00"
+  },
+  "redTeam": {
+    "status": "PASS",
+    "round": 2,
+    "taskId": "CLAUDE-REDTEAM-FRONTEND-COLLAPSE-2026-08-08",
+    "evidence": {
+      "path": "docs/REDTEAM-VERDICT-2026-08-08-frontend-collapse.md",
+      "contains": "## Historical verdict: PASS"
+    },
+    "unverified": [
+      "390px live phone journey",
+      "live AgentGlass proxy and frame authentication",
+      "thread continuity across live room changes"
+    ]
+  },
+  "dependencies": {
+    "pr262": "merged",
+    "pr264": "merged",
+    "settingsContract": "separate-approval-gate",
+    "filesBoundary": "not-decided"
+  },
+  "sources": {
+    "thread-route": {
+      "path": "container/gate.js",
+      "contains": "if (url.pathname === \"/chat/thread\" && req.method === \"GET\")"
+    },
+    "agent-relay": {
+      "path": "container/gate.js",
+      "contains": "function relayEngineMention(reply, fromEngine, tzOffsetMin)"
+    },
+    "push-navigation": {
+      "path": "container/sw.js",
+      "contains": "if (candidate.origin === self.location.origin) {"
+    },
+    "gated-backlog": {
+      "path": "container/gate.js",
+      "contains": "data: { kind: \"gated_backlog\", count: n, url: \"/?view=work%2Fboard\" }"
+    },
+    "canonical-board": {
+      "path": "container/canonical-board.js",
+      "contains": "const CANONICAL_BOARD_LANES = Object.freeze(["
+    },
+    "canonical-task-detail": {
+      "path": "container/canonical-board.js",
+      "contains": "details: \"/board/task/\" + encodeURIComponent(id)"
+    },
+    "artifacts": {
+      "path": "dashboard/components/agenthost/workbench.tsx",
+      "contains": "artifactViewUrl(f.name)"
+    },
+    "terminal": {
+      "path": "container/gate.js",
+      "contains": "const terminalHttpRoute = req.method === \"GET\" && (requestTarget.pathname === \"/terminal/\" || requestTarget.pathname === \"/terminal/token\")"
+    },
+    "reviews": {
+      "path": "container/gate.js",
+      "contains": "POST /board/task/:id/review"
+    },
+    "brain-memory": {
+      "path": "container/brain-lib.js",
+      "contains": "const list = url.pathname === \"/brain/api/memories\";"
+    },
+    "brain-canvas": {
+      "path": "dashboard/components/agenthost/brain-map.tsx",
+      "contains": "export function BrainMap({"
+    },
+    "mesh": {
+      "path": "container/gate.js",
+      "contains": "if (url.pathname === \"/cc/mesh\" && req.method === \"GET\")"
+    },
+    "agents": {
+      "path": "container/gate.js",
+      "contains": "if (url.pathname === \"/cc/state\" && req.method === \"GET\")"
+    },
+    "inventory": {
+      "path": "container/gate.js",
+      "contains": "if (url.pathname === \"/cc/inventory\" && req.method === \"GET\")"
+    },
+    "loops": {
+      "path": "container/gate.js",
+      "contains": "if (url.pathname === \"/cron/jobs\" && req.method === \"GET\")"
+    },
+    "multi-loops-route": {
+      "path": "container/gate.js",
+      "contains": "if (url.pathname === \"/cron/multi/jobs\" && req.method === \"GET\")"
+    },
+    "multi-loops-builder": {
+      "path": "dashboard/components/agenthost/multi-loops.tsx",
+      "contains": "export function MultiLoops({"
+    },
+    "autonomy": {
+      "path": "container/gate.js",
+      "contains": "if (url.pathname !== \"/autonomy\") return false;"
+    },
+    "stop-room": {
+      "path": "control-plane/overlay/web/src/lib/agenthostRoom.ts",
+      "contains": "export async function stopAgentHostRoom"
+    },
+    "settings": {
+      "path": "dashboard/components/agenthost/settings.tsx",
+      "contains": "export const SETTINGS_SECTIONS"
+    },
+    "mode": {
+      "path": "container/gate.js",
+      "contains": "if (url.pathname === \"/api/mode\" && req.method === \"GET\")"
+    },
+    "growth-accounts": {
+      "path": "dashboard/lib/api.ts",
+      "contains": "const result = await growthJson<unknown>(\"/growth/accounts\")"
+    },
+    "growth-operating-surfaces": {
+      "path": "dashboard/components/agenthost/growth-view.tsx",
+      "contains": "Scheduled Growth workflows"
+    }
+  },
+  "capabilities": [
+    {
+      "id": "shared-team-thread",
+      "currentTruth": "One durable transcript is exposed by the chat and activity routes.",
+      "finalHome": "Room rail attached across every room",
+      "treatment": "Preserve one store and one conversation identity.",
+      "state": "live",
+      "proofSources": ["thread-route"]
+    },
+    {
+      "id": "agent-conversation",
+      "currentTruth": "Bounded agent-to-agent relays write through the shared transcript.",
+      "finalHome": "Room rail and agent activity",
+      "treatment": "Preserve the relay; do not create a second room or transcript.",
+      "state": "live",
+      "proofSources": ["agent-relay"]
+    },
+    {
+      "id": "push-notification-entry",
+      "currentTruth": "Task-bearing pushes enter the generated shell through /?task=<id>; every other push family is classified below.",
+      "finalHome": "Work / Board / exact task",
+      "treatment": "Point notifications directly at the canonical root shell; no compatibility pathname remains live.",
+      "state": "live",
+      "proofSources": ["push-navigation"]
+    },
+    {
+      "id": "gated-backlog-reminder",
+      "currentTruth": "The aggregate reminder opens Work / Board in the generated shell rather than inventing an exact task.",
+      "finalHome": "Work / Board / awaiting operator",
+      "treatment": "Preserve the generic board entry separately from exact task links.",
+      "state": "live",
+      "proofSources": ["gated-backlog"]
+    },
+    {
+      "id": "canonical-board",
+      "currentTruth": "The board, task detail, notes, reviews, and freeze actions share one durable substrate.",
+      "finalHome": "Work / Board",
+      "treatment": "Transplant the approved hierarchy around existing actions.",
+      "state": "live",
+      "proofSources": ["canonical-board", "canonical-task-detail"]
+    },
+    {
+      "id": "artifacts",
+      "currentTruth": "Artifacts have live list, render, and download paths.",
+      "finalHome": "Work / Artifacts and Proof",
+      "treatment": "Preserve the live reader and download action.",
+      "state": "live",
+      "proofSources": ["artifacts"]
+    },
+    {
+      "id": "terminal",
+      "currentTruth": "The interactive terminal is ttyd, isolated under the /terminal base path and framed by the workspace.",
+      "finalHome": "Work / Terminal",
+      "treatment": "Bridge to ttyd; never render a decorative terminal.",
+      "state": "bridge",
+      "proofSources": ["terminal"]
+    },
+    {
+      "id": "reviews",
+      "currentTruth": "Review actions are board-task actions and board lanes, not a second review store.",
+      "finalHome": "Work / Reviews",
+      "treatment": "Render a board-backed view.",
+      "state": "derived",
+      "proofSources": ["reviews", "canonical-board"]
+    },
+    {
+      "id": "files",
+      "currentTruth": "No unified laptop-and-box file boundary is approved.",
+      "finalHome": "Work / Files",
+      "treatment": "Do not render a working-looking file browser until the boundary is approved.",
+      "state": "contract_gate",
+      "blockedBy": "scoped file read, write, upload, download, and cross-box contract"
+    },
+    {
+      "id": "brain-memories",
+      "currentTruth": "The Brain reads and creates real memory records through the memory adapter.",
+      "finalHome": "Brain / Memory",
+      "treatment": "Preserve live ingest, creation, and identity.",
+      "state": "live",
+      "proofSources": ["brain-memory"]
+    },
+    {
+      "id": "brain-lobes-nodes",
+      "currentTruth": "The generated Brain renders interactive lobes and a canvas over live memory records.",
+      "finalHome": "Brain / Memory",
+      "treatment": "Transplant the approved lobe-to-lane and memory-to-detail interactions over real memory IDs.",
+      "state": "mixed",
+      "proofSources": ["brain-memory", "brain-canvas"]
+    },
+    {
+      "id": "learning-skills-experiments",
+      "currentTruth": "No verified record writers back these three prototype tabs.",
+      "finalHome": "Brain tabs",
+      "treatment": "Show honest unavailable states until writers and readers exist.",
+      "state": "contract_gate",
+      "blockedBy": "learning, skill, and experiment record contracts"
+    },
+    {
+      "id": "mesh",
+      "currentTruth": "The box exposes observed mesh state.",
+      "finalHome": "Systems / Mesh",
+      "treatment": "Show only observed peers, timestamps, and causes.",
+      "state": "live",
+      "proofSources": ["mesh"]
+    },
+    {
+      "id": "agents",
+      "currentTruth": "The box exposes observed agent state and capability data.",
+      "finalHome": "Systems / Agents",
+      "treatment": "Keep identity, readiness, repo, branch, observation time, and cause truthful.",
+      "state": "live",
+      "proofSources": ["agents"]
+    },
+    {
+      "id": "parallel-agent-lanes",
+      "currentTruth": "No lanes[] writer exists; current autonomy exposes one shared busy lane.",
+      "finalHome": "Systems / Agents after a real writer exists",
+      "treatment": "Do not render parallel capacity or counts.",
+      "state": "contract_gate",
+      "blockedBy": "server writer plus behavioral lane contract"
+    },
+    {
+      "id": "inventory",
+      "currentTruth": "The box exposes live skills, plugins, MCPs, and tools inventory.",
+      "finalHome": "Systems / Inventory",
+      "treatment": "Preserve filters, details, and export behavior.",
+      "state": "live",
+      "proofSources": ["inventory"]
+    },
+    {
+      "id": "loops",
+      "currentTruth": "Loop jobs and runs have live routes.",
+      "finalHome": "Systems / Loops",
+      "treatment": "Preserve create, browse, delete, history, and cause-bearing failures.",
+      "state": "live",
+      "proofSources": ["loops"]
+    },
+    {
+      "id": "multi-loops",
+      "currentTruth": "Backend routes and the generated workflow builder exist in the one workspace shell.",
+      "finalHome": "Systems / Loops",
+      "treatment": "Diagnose live behavior, then build and prove the real Next workflow builder without an endless loading state.",
+      "state": "mixed",
+      "proofSources": ["multi-loops-route", "multi-loops-builder"]
+    },
+    {
+      "id": "pause-resume-autonomy",
+      "currentTruth": "The box exposes live autonomy read and mutation behavior.",
+      "finalHome": "Growth / Autonomy",
+      "treatment": "Growth owns the record; Systems / Operations may link to the same record but may not become a second home.",
+      "state": "live",
+      "proofSources": ["autonomy"]
+    },
+    {
+      "id": "stop-room",
+      "currentTruth": "Stop Room exists only in the local Agent Room runtime.",
+      "finalHome": "Systems / Operations when the active local adapter proves support",
+      "treatment": "Runtime-gate the control; never imply a box route exists.",
+      "state": "bridge",
+      "proofSources": ["stop-room"]
+    },
+    {
+      "id": "broadcast",
+      "currentTruth": "No verified box Broadcast route exists.",
+      "finalHome": "Room rail after a real contract exists",
+      "treatment": "Do not render a working-looking control.",
+      "state": "contract_gate",
+      "blockedBy": "verified broadcast route, scope, and failure contract"
+    },
+    {
+      "id": "settings",
+      "currentTruth": "Mode plus nine named legacy settings destinations are already reachable from the Next interface.",
+      "finalHome": "Settings & Mode",
+      "treatment": "Preserve every named deep link on desktop and phone; integrate only after the approved schema gate.",
+      "state": "bridge",
+      "proofSources": ["settings"]
+    },
+    {
+      "id": "mode",
+      "currentTruth": "The active box mode is read and changed through /api/mode.",
+      "finalHome": "Global mode switch",
+      "treatment": "Reload observed mode and state whenever the selected box changes.",
+      "state": "live",
+      "proofSources": ["mode"]
+    },
+    {
+      "id": "growth-accounts-brand-dna",
+      "currentTruth": "Growth account and Brand DNA client paths exist, including export.",
+      "finalHome": "Growth / Brand DNA",
+      "treatment": "Render API-backed accounts and DNA; label fallback samples.",
+      "state": "live",
+      "proofSources": ["growth-accounts"]
+    },
+    {
+      "id": "goals-okrs",
+      "currentTruth": "Canonical board task IDs and detail links are the verified durable target for Goals, OKRs, linked cards, and proof; no second OKR store exists.",
+      "finalHome": "Growth / Goals and OKRs",
+      "treatment": "Build one board-derived view whose linked cards open canonical task detail.",
+      "state": "derived",
+      "proofSources": ["canonical-board", "canonical-task-detail"]
+    },
+    {
+      "id": "growth-operating-surfaces",
+      "currentTruth": "Growth exposes live Brand DNA, board-backed goals and OKRs, observed autonomy, and scheduled Growth workflows; the retired sample operating views are absent.",
+      "finalHome": "Growth",
+      "treatment": "Keep only live or board-derived surfaces until a real writer exists.",
+      "state": "live",
+      "proofSources": ["growth-operating-surfaces"]
+    }
+  ],
+  "rooms": [
+    {
+      "id": "overview",
+      "desktopEntry": { "source": "primary rail", "label": "Overview", "destination": "Overview" },
+      "phoneEntry": { "kind": "tab", "source": "bottom navigation", "label": "Overview", "destination": "Overview" }
+    },
+    {
+      "id": "work",
+      "desktopEntry": { "source": "primary rail", "label": "Work", "destination": "Work" },
+      "phoneEntry": { "kind": "tab", "source": "bottom navigation", "label": "Work", "destination": "Work" }
+    },
+    {
+      "id": "growth",
+      "desktopEntry": { "source": "primary rail", "label": "Growth", "destination": "Growth" },
+      "phoneEntry": { "kind": "sheet", "source": "More sheet", "label": "Growth", "destination": "Growth" }
+    },
+    {
+      "id": "brain",
+      "desktopEntry": { "source": "primary rail", "label": "Brain", "destination": "Brain" },
+      "phoneEntry": { "kind": "sheet", "source": "More sheet", "label": "Brain", "destination": "Brain" }
+    },
+    {
+      "id": "systems",
+      "desktopEntry": { "source": "primary rail", "label": "Systems", "destination": "Systems" },
+      "phoneEntry": { "kind": "sheet", "source": "More sheet", "label": "Systems", "destination": "Systems" }
+    }
+  ],
+  "settingsSections": [
+    { "id": "mode", "label": "Mode", "anchor": "mode-title", "desktopEntry": "Settings & Mode > Mode", "phoneEntry": "Settings & Mode sheet > Mode", "destination": "SettingsWorkspace:mode-title", "source": { "path": "dashboard/components/agenthost/settings.tsx", "contains": "{ anchor: \"mode-title\", label: \"Mode\"" } },
+    { "id": "llm-roster", "label": "LLM Roster", "anchor": "roster-title", "desktopEntry": "Settings & Mode > LLM Roster", "phoneEntry": "Settings & Mode sheet > LLM Roster", "destination": "SettingsWorkspace:roster-title", "source": { "path": "dashboard/components/agenthost/settings.tsx", "contains": "{ anchor: \"roster-title\", label: \"LLM Roster\"" } },
+    { "id": "box-services", "label": "Box Services", "anchor": "services-title", "desktopEntry": "Settings & Mode > Box Services", "phoneEntry": "Settings & Mode sheet > Box Services", "destination": "SettingsWorkspace:services-title", "source": { "path": "dashboard/components/agenthost/settings.tsx", "contains": "{ anchor: \"services-title\", label: \"Box Services\"" } },
+    { "id": "channels", "label": "Channels", "anchor": "channels-title", "desktopEntry": "Settings & Mode > Channels", "phoneEntry": "Settings & Mode sheet > Channels", "destination": "SettingsWorkspace:channels-title", "source": { "path": "dashboard/components/agenthost/settings.tsx", "contains": "{ anchor: \"channels-title\", label: \"Channels\"" } },
+    { "id": "cost-budget", "label": "Cost & Budget", "anchor": "cost-title", "desktopEntry": "Settings & Mode > Cost & Budget", "phoneEntry": "Settings & Mode sheet > Cost & Budget", "destination": "SettingsWorkspace:cost-title", "source": { "path": "dashboard/components/agenthost/settings.tsx", "contains": "{ anchor: \"cost-title\", label: \"Cost & Budget\"" } },
+    { "id": "schedule", "label": "Schedule", "anchor": "schedule-title", "desktopEntry": "Settings & Mode > Schedule", "phoneEntry": "Settings & Mode sheet > Schedule", "destination": "SettingsWorkspace:schedule-title", "source": { "path": "dashboard/components/agenthost/settings.tsx", "contains": "{ anchor: \"schedule-title\", label: \"Schedule\"" } },
+    { "id": "board", "label": "Board", "anchor": "board-title", "desktopEntry": "Settings & Mode > Board", "phoneEntry": "Settings & Mode sheet > Board", "destination": "SettingsWorkspace:board-title", "source": { "path": "dashboard/components/agenthost/settings.tsx", "contains": "{ anchor: \"board-title\", label: \"Board\"" } },
+    { "id": "git-ladder", "label": "Git Ladder", "anchor": "git-ladder-title", "desktopEntry": "Settings & Mode > Git Ladder", "phoneEntry": "Settings & Mode sheet > Git Ladder", "destination": "SettingsWorkspace:git-ladder-title", "source": { "path": "dashboard/components/agenthost/settings.tsx", "contains": "{ anchor: \"git-ladder-title\", label: \"Git Ladder\"" } },
+    { "id": "agent-reporting", "label": "Agent Reporting", "anchor": "reporting-title", "desktopEntry": "Settings & Mode > Agent Reporting", "phoneEntry": "Settings & Mode sheet > Agent Reporting", "destination": "SettingsWorkspace:reporting-title", "source": { "path": "dashboard/components/agenthost/settings.tsx", "contains": "{ anchor: \"reporting-title\", label: \"Agent Reporting\"" } },
+    { "id": "about", "label": "About", "anchor": "about-title", "desktopEntry": "Settings & Mode > About", "phoneEntry": "Settings & Mode sheet > About", "destination": "SettingsWorkspace:about-title", "source": { "path": "dashboard/components/agenthost/settings.tsx", "contains": "{ anchor: \"about-title\", label: \"About\"" } }
+  ],
+  "linkContracts": [
+    { "id": "task", "destination": "/?task=:encodedTaskId", "identifier": "taskId", "desktopEntry": "Work > Board > card", "phoneEntry": "Work tab > Board > card", "preserveContext": true, "failureBehavior": "Open Work / Board and name that the requested card no longer exists.", "implementation": "live" },
+    { "id": "objective", "destination": "Work / Board / task detail", "identifier": "linkedTaskId", "desktopEntry": "Growth > Goals & OKRs > Linked Board cards", "phoneEntry": "Growth sheet > Goals & OKRs > Linked Board cards", "preserveContext": true, "failureBehavior": "Keep the objective visible and name which linked card cannot be read.", "substrate": "canonical-board", "implementation": "step-6" },
+    { "id": "artifact", "destination": "/artifacts/view?p=:encodedName", "identifier": "artifactName", "desktopEntry": "Work > Artifacts > item", "phoneEntry": "Work tab > Artifacts > item", "preserveContext": true, "failureBehavior": "Name the artifact read failure and keep the Artifacts list reachable.", "implementation": "live" },
+    { "id": "memory", "destination": "Brain / Memory / memory detail", "identifier": "memoryId", "desktopEntry": "Brain > Memory > node or card", "phoneEntry": "Brain sheet > Memory > node or card", "preserveContext": true, "failureBehavior": "Keep the lane visible and name that the memory was removed or could not be read.", "implementation": "step-4" },
+    { "id": "agent", "destination": "Systems / Agents / agent detail", "identifier": "agentId", "desktopEntry": "Systems > Agents > agent", "phoneEntry": "Systems sheet > Agents > agent", "preserveContext": true, "failureBehavior": "Open the observed agent record and name why live state is unavailable.", "implementation": "step-5" },
+    { "id": "settings", "destination": "SettingsWorkspace::settingsSection", "identifier": "settingsSection", "desktopEntry": "Settings & Mode > named section", "phoneEntry": "Settings & Mode sheet > named section", "preserveContext": true, "failureBehavior": "Keep the Settings workspace open and name the failed section read.", "implementation": "live" },
+    { "id": "terminal", "destination": "/terminal/", "identifier": "terminalWindow", "desktopEntry": "Work > Terminal", "phoneEntry": "Work tab > Terminal", "preserveContext": true, "failureBehavior": "Name that the engine has no interactive terminal or that ttyd is unavailable.", "implementation": "live" }
+  ],
+  "pushEntry": {
+    "retiredPathPolicy": { "paths": ["/cc", "/cc/legacy", "/desk", "/chat", "/cron", "/kanban", "/brain", "/profiles", "/settings"], "status": 410, "redirect": false, "servesShell": false },
+    "genericFamilies": [
+      { "id": "gated-backlog", "context": "awaiting-operator-board", "sourceMarker": "data: { kind: \"gated_backlog\", count: n, url: \"/?view=work%2Fboard\" }", "currentDestination": "/?view=work%2Fboard", "requiredDestination": "/?view=work%2Fboard", "status": "live" }
+    ],
+    "linkedTaskFamilies": [
+      { "id": "wording-gate", "context": "task", "sourceMarker": "pushPayload(\"Wording blocks auto-run\"", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" },
+      { "id": "approval-needed", "context": "task", "sourceMarker": "pushPayload(\"Approval needed to run\"", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" },
+      { "id": "autonomous-failure", "context": "task", "sourceMarker": "pushPayload(assignee + \" hit an error\"", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" },
+      { "id": "review-ready", "context": "task", "sourceMarker": "pushPayload(assignee + \" finished", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" },
+      { "id": "handoff-proposed", "context": "task", "sourceMarker": "pushPayload(fromEngine + \"", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" },
+      { "id": "awaiting-human", "context": "task", "sourceMarker": "pushPayload(parkedPushTitle", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" }
+    ],
+    "contextualFamilies": [
+      { "id": "agent-finished", "context": "chat", "sourceMarker": "pushPayload(\"Agent finished\"", "currentDestination": "/", "requiredDestination": "/", "status": "live" },
+      { "id": "chat-approval-needed", "context": "chat", "sourceMarker": "pushPayload(\"Approval needed\", (engineId", "currentDestination": "/", "requiredDestination": "/", "status": "live" },
+      { "id": "board-write-denied", "context": "board-aggregate", "sourceMarker": "pushPayload(\"Board write denied (\" + by + \")\"", "currentDestination": "/?view=work%2Fboard", "requiredDestination": "/?view=work%2Fboard", "status": "live" },
+      { "id": "task-auto-approved-no-reviewer", "context": "task", "sourceMarker": "pushPayload(\"Auto-approved: no reviewer available\"", "contextMarker": "auto-approved (no reviewers):", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" },
+      { "id": "task-approved-api-fallback", "context": "task", "sourceMarker": "pushPayload(\"Task approved\"", "contextMarker": "api fallback) approved", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" },
+      { "id": "task-auto-approved-api-fallback", "context": "task", "sourceMarker": "pushPayload(\"Auto-approved: no reviewer available\"", "contextMarker": "auto-approved (all reviewers down):", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" },
+      { "id": "task-auto-approved-no-verdict", "context": "task", "sourceMarker": "pushPayload(\"Auto-approved: no usable verdict\"", "contextMarker": "auto-approved (no verdict, no reviewers):", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" },
+      { "id": "frozen-card-held-review", "context": "task", "sourceMarker": "pushPayload(\"Frozen card held\"", "contextMarker": "approved \" + author + \"'s work but the card is frozen", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" },
+      { "id": "task-done", "context": "task", "sourceMarker": "pushPayload(\"Task done\"", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" },
+      { "id": "frozen-card-held-git-review", "context": "task", "sourceMarker": "pushPayload(\"Frozen card held\"", "contextMarker": "reviewed PR #\" + fresh.pr.number + \" but the card is frozen", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" },
+      { "id": "pull-request-ready", "context": "task", "sourceMarker": "pushPayload(merged ? \"PR merged\" : \"PR ready\"", "currentDestination": "/?task=:encodedTaskId", "requiredDestination": "/?task=:encodedTaskId", "status": "live" }
+    ],
+    "systemFamilies": [
+      { "id": "loop-finished-legacy", "context": "system", "sourceMarker": "pushPayload(exit === 0 && !error ? \"Loop finished\" : \"Loop FAILED\"", "currentDestination": "/", "requiredDestination": "/", "status": "live" },
+      { "id": "loop-run-status", "context": "system", "sourceMarker": "pushPayload(status === \"ok\" ? \"Loop finished\" : \"Loop \" + status", "currentDestination": "/", "requiredDestination": "/", "status": "live" },
+      { "id": "push-test", "context": "system", "sourceMarker": "pushPayload(\"Push is working\"", "currentDestination": "/", "requiredDestination": "/", "status": "live" },
+      { "id": "mode-boot-failure", "context": "system", "sourceMarker": "mode did not boot`, MODE_BOOT.errors[0]", "currentDestination": "/", "requiredDestination": "/", "status": "live" }
+    ]
+  },
+  "routePhases": [
+    { "id": "final", "routes": { "/": "generated-dashboard-200", "/audit": "generated-dashboard-200", "/2fa": "generated-dashboard-200", "/cc": "retired-410", "/cc/legacy": "retired-410", "/desk": "retired-410", "/chat": "retired-410", "/cron": "retired-410", "/kanban": "retired-410", "/brain": "retired-410", "/profiles": "retired-410", "/settings": "retired-410" } }
+  ],
+  "truthStates": [
+    { "state": "healthy", "cause": null, "observedAt": "2026-08-08T15:15:00-04:00" },
+    { "state": "degraded", "cause": "Peer is outside the allowed task scope.", "observedAt": "2026-08-08T15:14:30-04:00" },
+    { "state": "down", "cause": "Laptop sleeping; retry scheduled in 30 seconds.", "observedAt": "2026-08-08T15:14:00-04:00" }
+  ],
+  "surfaceTruth": {
+    "growth": [
+      { "id": "brand-dna", "state": "live", "label": "Live from this box", "proof": ["/growth/accounts", "/growth/accounts/:id/dna"] },
+      { "id": "goals", "state": "derived", "label": "Board-backed goals", "proof": ["canonical board task IDs"] },
+      { "id": "okrs", "state": "derived", "label": "Board-backed OKRs and proof", "proof": ["canonical board task IDs"] },
+      { "id": "autonomy", "state": "live", "label": "Observed autonomy state", "proof": ["/autonomy"] },
+      { "id": "campaigns", "state": "sample", "label": "Sample planning data; launched work becomes real board cards" },
+      { "id": "creative", "state": "sample", "label": "Sample creative data" },
+      { "id": "calendar", "state": "sample", "label": "Sample calendar data" },
+      { "id": "intel", "state": "sample", "label": "Sample intelligence data" },
+      { "id": "attribution", "state": "sample", "label": "Sample attribution data" }
+    ],
+    "brain": [
+      { "id": "memory", "state": "live", "label": "Live memories from this box", "proof": ["/brain/api/memories"] },
+      { "id": "lobes-and-nodes", "state": "derived", "label": "Visual organization of live memories", "proof": ["memory IDs, agents, scopes, kinds, tags, and real relations"] },
+      { "id": "learning", "state": "contract_gate", "label": "Unavailable until learning records have a writer", "blockedBy": "learning record writer and reader" },
+      { "id": "skills", "state": "contract_gate", "label": "Unavailable until skill records have a writer", "blockedBy": "skill record writer and reader" },
+      { "id": "experiments", "state": "contract_gate", "label": "Unavailable until experiment records have a writer", "blockedBy": "experiment record writer and reader" }
+    ]
+  }
+}

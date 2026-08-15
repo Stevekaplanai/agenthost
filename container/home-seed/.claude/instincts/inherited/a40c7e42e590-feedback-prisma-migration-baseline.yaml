@@ -1,0 +1,16 @@
+---
+id: a40c7e42e590-feedback-prisma-migration-baseline
+trigger: "Prisma reports all migrations unapplied but the database is already populated"
+confidence: 0.8
+domain: "infra"
+source: "memory/C--Users-User/feedback_prisma_migration_baseline.md"
+scope: global
+---
+
+# Feedback Prisma Migration Baseline
+
+## Action
+Verify schema matches with migrate diff, then baseline by marking all existing migrations as applied using prisma migrate resolve.
+
+## Evidence
+Seeded from memory/C--Users-User/feedback_prisma_migration_baseline.md via seed_instincts.py.

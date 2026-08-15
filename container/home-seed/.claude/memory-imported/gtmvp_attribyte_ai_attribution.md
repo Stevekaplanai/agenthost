@@ -1,0 +1,42 @@
+---
+name: gtmvp-attribyte-ai-attribution
+description: "Feasibility + plan for AI-assistant ad/referral attribution folded into GTMVP + Attribyte (the \"do ChatGPT ads make money\" wedge)"
+metadata: 
+  node_type: memory
+  type: project
+  review_after: 2026-06-09
+  originSessionId: ce43c425-e6e3-48a9-9015-78febb55f10f
+---
+
+Strategic analysis (2026-06-01, multi-agent workflow + verified against live code) on whether to own "AI-assistant attribution" via GTMVP + Attribyte.
+
+**Feasibility spectrum (as of 2026-06-01):**
+- Detect AI-assistant REFERRAL traffic: doable NOW but lossy. `utm_source=chatgpt.com` (survives referrer stripping) + referrer hosts (perplexity.ai, claude.ai, gemini.google.com, copilot.microsoft.com). You see a 30-65% FLOOR, never the full number (mobile webviews, noreferrer on paid ChatGPT, copy-paste, AI Overviews pass no referrer). GA4 added native "AI Assistant" channel group ~May 2026.
+- Attribute CONVERSIONS to AI touchpoints: Attribyte's DDA engine is CHANNEL-AGNOSTIC (verified). Add `ai_assistant` and it earns Markov/Shapley credit with ZERO engine changes. Limited by lossy capture + branded-search laundering (un-attributable deterministically).
+- Paid ChatGPT-ad ROAS ("do the ads make money"): BLOCKED for clean B2B loop today. OpenAI shipped pixel + Conversions API (May 5) + Ads Manager dashboard, but NO native ROAS report, NO third-party measurement, NO CRM connector, conversion-objective rollout ~June 5. Singular shipped app/ecom ROAS May 21; B2B-CRM slice open. Honest flag = "wired to measure it the day the platform exposes it," NEVER "we measure it today."
+
+**The wedge:** paid-ChatGPT-ad CPA measured against closed-won in the CRM for Series A B2B SaaS (seam between GEO-visibility tools that stop at GA4 and B2B attribution tools with no AI module). REAL but CONTESTED + shrinking. Tech lift is near-zero for everyone, incl. Dreamdata/Factors who already own the CRM join. The moat is NOT the product. It's Steve publishing REAL numbers from actual OpenAI-Ads spend, which no incumbent does.
+
+**KEY CORRECTION (verified, red-team caught it):** Do NOT build a new free "AI Traffic Check" tool. GTMVP already has it:
+- `lib/audit/engine-agents/a07/technical-evidence.ts` already scores AI-crawler access / llms.txt / citability 0-100 with remediation templates.
+- `app/(public)/stack-auditor/` + `app/api/stack-auditor/{scan,enroll-email}` = live domain-scan with email-gate-on-blur.
+- A 5th free tool would cannibalize and pull the WRONG lead (GEO-curious marketers, not budget-holding founders). Fold an "AI traffic capture readiness" SECTION into stack-auditor instead (~1 day).
+
+**Narrowed plan (verdict: PURSUE narrowed):**
+1. NOW (~1 day): surface a07's AI-readiness scoring as a stack-auditor section + 1-2 measurement-dimension questions in `lib/gtm-health-score/questions.ts` (real `measurement` dim @ :378,411), framed as PAID-MEDIA measurement readiness not organic visibility.
+2. NEXT (~half day): Attribyte `ai_assistant` enum (`supabase/migrations/...baseline...sql` channel_type @ :88-91, ADD VALUE outside txn) + classifier branch in `apps/api/src/lib/touchpoint-creator.ts` (`inferChannel`/`getChannelFromUtm`) AND its mirror `apps/worker/src/processors/touchpoint-creator.ts` + `ChannelSchema` in `packages/shared/src/types/index.ts`.
+3. WEDGE: run real budget through OpenAI Ads (Steve or a client), stitch to closed-won via Attribyte, publish "here's my actual CPA."
+4. Small paid tool = "AI Attribution Readiness" MODULE inside existing $129 Diagnostic (extends Module 20 / `attribution-crm` skill), NOT a new SKU.
+
+**Guardrail:** Do NOT publish a "do ChatGPT ads make money" post until Steve has run real spend. The only honest post now is "nobody can prove it yet, here's why." The 4-23x AI conversion-quality stats are single-vendor/consumer-skewed; don't cite to B2B audience as-is.
+
+**Dated trigger:** OpenAI conversion-objective rollout ~June 5, 2026 flips paid-ad-CPA from "pending platform" to measurable. Watch for it.
+
+**STATUS (2026-06-01, decided + scheduled):**
+- Steve approved building this on June 5 (the ~1.5-day build, timed to the OpenAI rollout). Calendar event created on steve@stevekaplan.ai (June 5, 9-12 ET).
+- Durable June 5 remote routine created: `trig_01T2ga2UePXe4hreeQJYrF2D` (https://claude.ai/code/routines/trig_01T2ga2UePXe4hreeQJYrF2D), one-shot 2026-06-05T13:05:00Z, sonnet-4-6, clones GTMVP/GTMVP_V0 + Stevekaplanai/attribyte, opens DRAFT PRs for the GTMVP free-tier section + measurement questions + Diagnostic module, and the Attribyte ai_assistant channel. Branches off origin/main. (Local CronCreate came back session-only, so the remote routine is the durable Claude-side channel.) **UPDATE 2026-06-01 (later): Steve chose to BUILD NOW instead of waiting for June 5. Routine `trig_01T2ga2UePXe4hreeQJYrF2D` DISABLED (enabled:false). Calendar event repointed from "build" to a slim manual "check OpenAI conversion-objective rollout" reminder. The build is being done via 3 PRs (Attribyte ai_assistant channel + GTMVP free-tier AI-readiness-in-stack-auditor + GTMVP $129 Diagnostic module). The paid-ChatGPT-ad-ROAS tile stays behind `inActiveBuild` until OpenAI exposes conversion value (Steve checks manually ~June 5).**
+
+**BUILT + MERGED 2026-06-01:** AI-attribution wedge shipped — #138 (MMM prediction-interval provenance, apps/api), #140 (Option A provenance pills in apps/web MeasurementPage — pills only show on real MMM data; sample fixtures lack `methodology`), #227 (GTMVP free-tier: a07 AI-readiness section folded into existing stack-auditor + 2 paid-media measurement questions, existing weights rebalanced to keep dim=20/total=100), #228 (GTMVP $129 Diagnostic: attribution-crm AI rows + `inActiveBuild` findings tile reachable by direct URL only + ga4 AI-referrer regex). All merged to main. **#139 (Attribyte `ai_assistant` channel) HELD OPEN as a draft** — blocked by a PRE-EXISTING baseline bug, NOT by #139: `supabase/migrations/20260101000000_baseline_from_prod.sql` creates `idx_mv_hourly_event_volume_unique` (~line 1450) BEFORE the matview `mv_hourly_event_volume` (~line 1497), so a from-zero apply (Supabase Preview) dies at statement 185. Surfaced only because #139 is the first PR to add a migration (the others skipped Supabase Preview). Contradicts PR #94's "build-clean-from-zero verified"; likely more ordering breaks downstream — see [[feedback_verify_clean_build_first]]. The `ai_assistant ADD VALUE` is prod-safe. **RESOLVED 2026-06-01: the baseline bug was a SINGLE ordering issue, not 8+ — fixed in PR #142 (MERGED): relocated `idx_mv_hourly_event_volume_unique` to after its matview. Supabase Preview from-zero now PASSES. The migration chain builds clean from zero again (no prod impact; prod already had both objects). #139 was rebased onto the fixed baseline (96eb316), its Supabase Preview now GREEN = unblocked. Steve had explicitly held #139; confirm before merging.** Also #141 (sample-fixture methodology so Option A pills show in the demo) open + green. OpenAI check (2026-06-01): the conversion-OPTIMIZED objective DID ship June 5 (pixel + Conversions API, on-site conversions) — but that's on-site conversion tracking, NOT B2B-CRM-closed-won ROAS, which remains the wedge; the Diagnostic tile copy could update from "objective pending" to "objective live; CRM-closed-won stitch is the remaining piece" (don't claim ROAS measurement). Gemini fix in #139: AI-host check runs before search-engine check so `gemini.google.com` isn't swallowed as organic_search.
+- Projects/ cleanup DONE (Steve: "Full consolidate"): deleted 33 scattered attribyte-* scratch dirs (27 node_modules-only shells, _attribyte_docs_move, 3 stale full-repo copies, design + tour-design after preserving). Only canonical `attribyte` remains in Projects/. Unique content (design PRDs/brand-assets + tour VO assets, 79 files) preserved at `attribyte/docs/_archive/{design,tour-design}`. Now SAFE ON GITHUB via **draft PR #132** (branch `chore/archive-design-docs` off main, commit 43c8d48): https://github.com/Stevekaplanai/attribyte/pull/132 — Steve to review/merge or close. Old pre-baseline migrations NOT archived (already in canonical history: baseline-reset f679a63 / aa1d2cf / PR #94). NOTE: the insight-summaries work was already merged to main as PR #131 (16cd762) — it was never actually at risk; only the new archive commit needed pushing.
+
+Related: [[gtmvp_attribyte_integration.md]], [[attribyte_server_llm_path.md]], [[gtmvp_repo_canonical_paths.md]], [[feedback_fetch_live_repo_first.md]].

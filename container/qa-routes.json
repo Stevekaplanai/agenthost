@@ -1,0 +1,45 @@
+{
+  "_comment": [
+    "Routes the visual QA agent captures, and the viewports it captures them at.",
+    "390px is FIRST and is not decoration: this repo's own conventions say 'the phone",
+    "view IS the product', so a regression there matters more than one at 1280.",
+    "",
+    "AUTH: a route with \"auth\": true sits behind the login wall. A pass-scoped token",
+    "is injected only into its document and immutable static-asset request headers by",
+    "a private extension; sanitized in-page fixtures answer every dashboard data read.",
+    "The token cannot read gate-backed state and is never an operator cookie. Those",
+    "routes are only capturable through POST /qa/run, which reserves the lane and mints one.",
+    "Direct/manual runner invocation is refused instead of photographing the login wall",
+    "and adopting it as a baseline. A baseline of the login page would compare clean",
+    "forever and catch nothing, which is worse than having no baseline at all.",
+    "",
+    "The workspace is served ONLY at the canonical root -- /cc, /kanban and the other",
+    "standalone paths are retired (HTTP 410) and the room is chosen client-side. So",
+    "the authenticated capture is '/' again, and it is a genuinely different page from",
+    "the unauthenticated '/' above it: one is the login wall, one is the workspace."
+  ],
+  "baseUrl": "https://app.agenthost.space",
+  "viewports": [
+    { "name": "phone", "width": 390, "height": 844 },
+    { "name": "tablet", "width": 768, "height": 1024 },
+    { "name": "desktop", "width": 1280, "height": 900 }
+  ],
+  "routes": [
+    { "path": "/brand.json", "name": "brand" },
+    { "path": "/", "name": "login" },
+    {
+      "path": "/",
+      "name": "workspace",
+      "auth": true,
+      "mask": [
+        "[data-qa-dynamic=workspace-observed]",
+        "[data-qa-dynamic=workspace-transcript-observed]"
+      ]
+    },
+    {
+      "path": "/audit",
+      "name": "audit",
+      "auth": true
+    }
+  ]
+}

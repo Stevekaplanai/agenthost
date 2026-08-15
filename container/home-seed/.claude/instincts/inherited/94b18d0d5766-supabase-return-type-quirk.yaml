@@ -1,0 +1,16 @@
+---
+id: 94b18d0d5766-supabase-return-type-quirk
+trigger: "a TypeScript typecheck fails on a Supabase query"
+confidence: 0.7
+domain: "integration"
+source: "vault/03_Insights/Supabase return-type quirk.md"
+scope: global
+---
+
+# Supabase Return Type Quirk
+
+## Action
+Double-cast the return type using 'as unknown as Type'.
+
+## Evidence
+Seeded from vault/03_Insights/Supabase return-type quirk.md via seed_instincts.py.

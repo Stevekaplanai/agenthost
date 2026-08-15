@@ -1,0 +1,16 @@
+---
+id: c240d686e63f-feedback-approval-required
+trigger: "When preparing to publish social media content"
+confidence: 0.4
+domain: "content"
+source: "memory/C--Users-User/feedback_approval_required.md"
+scope: global
+---
+
+# Feedback Approval Required
+
+## Action
+Provide previews of all visuals and text and wait for explicit approval before publishing.
+
+## Evidence
+Seeded from memory/C--Users-User/feedback_approval_required.md via seed_instincts.py.

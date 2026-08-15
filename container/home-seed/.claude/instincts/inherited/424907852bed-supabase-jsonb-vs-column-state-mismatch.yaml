@@ -1,0 +1,16 @@
+---
+id: 424907852bed-supabase-jsonb-vs-column-state-mismatch
+trigger: "a UI reading from a JSONB blob ignores top-level column updates"
+confidence: 0.7
+domain: "integration"
+source: "vault/03_Insights/Supabase JSONB vs Column State Mismatch.md"
+scope: global
+---
+
+# Supabase Jsonb Vs Column State Mismatch
+
+## Action
+Update both the top-level column and the corresponding JSONB sub-field simultaneously.
+
+## Evidence
+Seeded from vault/03_Insights/Supabase JSONB vs Column State Mismatch.md via seed_instincts.py.

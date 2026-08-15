@@ -1,0 +1,16 @@
+---
+id: 0931bcbfd681-feedback-parallel-claude-sessions-on-main
+trigger: "when preparing to commit or push changes"
+confidence: 0.8
+domain: "workflow"
+source: "memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/feedback_parallel_claude_sessions_on_main.md"
+scope: global
+---
+
+# Feedback Parallel Claude Sessions On Main
+
+## Action
+Always fetch origin/main first and branch off if concurrent modifications overlap with your files.
+
+## Evidence
+Seeded from memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/feedback_parallel_claude_sessions_on_main.md via seed_instincts.py.

@@ -1,0 +1,16 @@
+---
+id: 22d47ac6568d-parallel-agent-bulk-docs
+trigger: "when generating many similar documents across multiple projects"
+confidence: 0.8
+domain: "workflow"
+source: "vault/03_Insights/Parallel Agent Bulk Docs.md"
+scope: global
+---
+
+# Parallel Agent Bulk Docs
+
+## Action
+Launch parallel background agents in batches of 4-5 using fully self-contained prompts that include the shared template.
+
+## Evidence
+Seeded from vault/03_Insights/Parallel Agent Bulk Docs.md via seed_instincts.py.

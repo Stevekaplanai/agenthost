@@ -1,0 +1,63 @@
+{
+  "$schema": "agenthost-continuity-cost-fixtures-v1",
+  "contractId": "CONT-07",
+  "contractVersion": 1,
+  "seededSecret": "ah-test-cost-secret-DO-NOT-LOG",
+  "codes": ["SPEND_CONFIRMATION_REQUIRED", "COST_ESTIMATE_UNAVAILABLE", "COST_REQUEST_INVALID", "BUDGET_RESERVATION_INVALID", "BUDGET_EXHAUSTED"],
+  "chainCapUsdCents": 1500,
+  "softStopFraction": 0.8,
+  "billingModes": ["subscription", "metered", "local-nocost"],
+  "serverDerivedFields": ["billingMode", "band", "pricedAt"],
+  "credentialBilling": {
+    "CLAUDE_CODE_OAUTH_TOKEN": "subscription",
+    "ANTHROPIC_API_KEY": "metered",
+    "OPENAI_API_KEY": "metered",
+    "none-local": "local-nocost"
+  },
+  "projectionCases": [
+    { "id": "estimate-is-a-band-with-priced-at", "engine": "codex", "billing": "metered", "expected": { "low": 60, "expected": 80, "high": 120, "hasPricedAt": true, "singleFalsePreciseNumber": false }, "note": "cents (integer minor units); band never a lone exact figure" },
+    { "id": "subscription-engine-zero-dollars-tokens-still-shown", "engine": "claude", "billing": "subscription", "expected": { "expectedUsdCents": 0, "tokensShown": true, "shownAsFreeWhileTokensNearExhaustion": false }, "note": "Claude on OAuth subscription: ~$0 but tokens still bound work" },
+    { "id": "metered-engine-real-dollars-carries-a-band", "engine": "codex", "billing": "metered", "expected": { "low": 70, "expected": 80, "high": 100, "tokensShown": true, "singleFalsePreciseNumber": false }, "note": "the metered case is a BAND too -- a lone expectedUsdCents is the same defect" },
+    { "id": "local-nocost-model-zero-with-tokens", "engine": "ollama", "billing": "local-nocost", "expected": { "expectedUsdCents": 0, "tokensShown": true } },
+    { "id": "stale-price-widens-band-not-zero", "pricedAtMsAgo": 999999999, "freshBand": { "low": 70, "high": 90 }, "staleBand": { "low": 50, "high": 130 }, "expected": { "bandWidened": true, "silentlyZero": false }, "note": "stale span (80) strictly wider than fresh span (20); never collapses to 0" },
+    { "id": "missing-estimate-fails-closed", "estimateFormable": false, "expected": { "errorCode": "COST_ESTIMATE_UNAVAILABLE", "proceedsAsIfZero": false, "gatesForConfirmation": true }, "note": "a missing estimate never silently authorizes unbounded spend" },
+    { "id": "chain-projection-sums-stages", "stagesUsdCents": [20, 20, 20, 20], "expected": { "chainTotalUsdCents": 80, "shownAgainstCap": true } }
+  ],
+  "billingDerivationCases": [
+    { "id": "billing-derived-claude-oauth-is-subscription", "engine": "claude", "credential": "CLAUDE_CODE_OAUTH_TOKEN", "expected": { "billing": "subscription", "expectedUsdCents": 0, "tokensShown": true, "derivedFromCredential": true, "derivedFromEngineName": false } },
+    { "id": "billing-derived-claude-apikey-is-metered", "engine": "claude", "credential": "ANTHROPIC_API_KEY", "expected": { "billing": "metered", "low": 60, "expected": 80, "high": 120, "derivedFromCredential": true, "derivedFromEngineName": false }, "note": "SAME engine, different credential -> metered real dollars; keying on the name would project $0 and overspend silently" },
+    { "id": "caller-supplied-billing-rejected", "request": { "billingMode": "subscription" }, "suppliesServerDerivedField": "billingMode", "expected": { "errorCode": "COST_REQUEST_INVALID" } },
+    { "id": "caller-supplied-band-rejected", "request": { "band": { "low": 0, "expected": 0, "high": 0 } }, "suppliesServerDerivedField": "band", "expected": { "errorCode": "COST_REQUEST_INVALID" } },
+    { "id": "caller-supplied-pricedAt-rejected", "request": { "pricedAt": "2020-01-01T00:00:00Z" }, "suppliesServerDerivedField": "pricedAt", "expected": { "errorCode": "COST_REQUEST_INVALID" } }
+  ],
+  "enforcementCases": [
+    { "id": "inside-grant-proceeds-with-remaining", "projectedUsdCents": 80, "standingGrantUsdCents": 1500, "expected": { "proceeds": true, "showsRemaining": true, "remainingUsdCents": 1420, "gated": false } },
+    { "id": "at-grant-exactly-proceeds-boundary", "projectedUsdCents": 1500, "standingGrantUsdCents": 1500, "expected": { "proceeds": true, "gated": false, "remainingUsdCents": 0 }, "note": "spending exactly up to the grant is within it: projected == grant proceeds; only strictly-over gates" },
+    { "id": "outside-grant-gates-for-confirmation", "projectedUsdCents": 2000, "standingGrantUsdCents": 1500, "expected": { "errorCode": "SPEND_CONFIRMATION_REQUIRED", "projectionShownAtGate": true } },
+    { "id": "soft-stop-at-80-percent-no-new-children", "spentFraction": 0.8, "softStopFraction": 0.8, "expected": { "spawnsNewChildren": false, "movesToSynthesize": true }, "note": "reuse chains-lib softStopFraction: land the work, don't die at 100%" },
+    { "id": "just-under-soft-stop-still-spawns", "spentFraction": 0.79, "softStopFraction": 0.8, "expected": { "spawnsNewChildren": true } },
+    { "id": "observe-only-mode-audits-bypass", "enforcementEnabled": false, "overCap": true, "expected": { "bypassAudited": true, "silentlyIgnored": false, "displayWaitsOnCont04A": true }, "note": "costBypassed / cost.limitsEnabled:false: the budget_bypassed audit is backed today; the display half waits on CONT-04A" },
+    { "id": "projection-present-in-approval-gate-context", "expected": { "inGateLoadedContext": true, "settingsPanelOnly": false } }
+  ],
+  "reservationCases": [
+    { "id": "reserve-before-execute-then-settle-once", "expected": { "reservedBeforeStage": true, "settledOnce": true, "doubleCharged": false } },
+    { "id": "idempotent-settle-across-restart", "restartBetweenReserveAndSettle": true, "duplicateSettle": true, "settleDedupKey": "run:stage", "expected": { "doubleCharged": false, "doubleReleased": false, "keyedByRunStageId": true } },
+    { "id": "concurrent-reservations-cannot-overspend-chain-cap", "reservationsUsdCents": [80, 80], "capUsdCents": 100, "note": "each 80c <= 100c cap, but held together 160c > cap", "expected": { "secondRefused": true, "errorCode": "BUDGET_RESERVATION_INVALID", "collectivelyExceededCap": false } },
+    { "id": "reservation-equals-cap-refused-boundary", "reservationUsdCents": 100, "capUsdCents": 100, "expected": { "errorCode": "BUDGET_RESERVATION_INVALID", "refusedAtEqualsCap": true }, "note": "matches breaches() >= semantics: held total == cap is refused, so the hold and the guard agree at the boundary" },
+    { "id": "reservation-over-most-restrictive-limit-refused-before-stage", "reservationUsdCents": 80, "standingGrantUsdCents": 500, "perTaskCapUsdCents": 20, "expected": { "errorCode": "BUDGET_RESERVATION_INVALID", "refusedBeforeStageRuns": true }, "note": "80c <= standing 500c but > per-task cap 20c -> most-restrictive wins" },
+    { "id": "underestimate-trips-budget-exhausted-and-soft-stops", "reservedUsdCents": 80, "actualUsdCents": 200, "expected": { "errorCode": "BUDGET_EXHAUSTED", "softStops": true, "varianceRecorded": true, "varianceUsdCents": 120 } },
+    { "id": "normal-settle-records-variance-under-reservation", "reservedUsdCents": 80, "actualUsdCents": 50, "expected": { "varianceRecorded": true, "varianceUsdCents": -30, "doubleCharged": false }, "note": "variance (est vs actual) is a required release metric on BOTH over- and under-runs" },
+    { "id": "aux-voice-spend-debits-same-total-combined-overspend-refused", "auxUsdCents": 60, "inferenceHeldUsdCents": 60, "localVoiceCapUsdCents": 100, "capUsdCents": 100, "expected": { "errorCode": "BUDGET_RESERVATION_INVALID", "debitedAgainstSharedTotal": true, "keptSideBucket": false, "combinedExceededCap": false }, "note": "aux 60c is under its own local 100c limit, but aux+inference 120c > shared 100c cap -> refused; no side-bucket" }
+  ],
+  "secretInputCases": [
+    { "id": "secret-injected-into-projection-input-scrubbed", "injectField": "pricingSourceLabel", "injectValueIsSeededSecret": true, "expected": { "summaryContainsSecret": false, "artifactContainsSecret": false, "errorContainsSecret": false } }
+  ],
+  "envelopeCases": [
+    { "id": "envelope-success-projection", "code": null, "expected": { "status": "success", "summary": "This loop will cost about $0.80 across 4 stages; $14.20 of your chain budget remains.", "next_actions": [], "artifacts": [{ "type": "cost_projection", "chainTotalUsdCents": 80, "remainingUsdCents": 1420 }] } },
+    { "id": "envelope-error-confirmation-required", "code": "SPEND_CONFIRMATION_REQUIRED", "expected": { "status": "error", "summary": "This run would spend beyond your standing budget.", "next_actions": ["Approve the projected spend to proceed."], "artifacts": [], "error": { "code": "SPEND_CONFIRMATION_REQUIRED", "retry": "Confirm the spend, or narrow the run to fit the standing grant.", "stopCondition": "Do not spend beyond the standing grant without explicit confirmation." } } },
+    { "id": "envelope-error-estimate-unavailable", "code": "COST_ESTIMATE_UNAVAILABLE", "expected": { "status": "error", "summary": "No usable cost estimate could be formed.", "next_actions": [], "artifacts": [], "error": { "code": "COST_ESTIMATE_UNAVAILABLE", "retry": "Refresh pricing, then re-project; or confirm to proceed with an unknown cost.", "stopCondition": "Never proceed as if the cost were zero when it is unknown." } } },
+    { "id": "envelope-error-request-invalid", "code": "COST_REQUEST_INVALID", "expected": { "status": "error", "summary": "That cost request is invalid.", "next_actions": [], "artifacts": [], "error": { "code": "COST_REQUEST_INVALID", "retry": "Remove any supplied billing mode, band, or pricedAt; those are server-derived.", "stopCondition": "A caller cannot declare the billing mode or the cost band." } } },
+    { "id": "envelope-error-reservation-invalid", "code": "BUDGET_RESERVATION_INVALID", "expected": { "status": "error", "summary": "That reservation exceeds an applicable budget limit.", "next_actions": [], "artifacts": [], "error": { "code": "BUDGET_RESERVATION_INVALID", "retry": "Lower the reservation to fit the most restrictive cap.", "stopCondition": "A reservation can never raise an effective cap." } } },
+    { "id": "envelope-error-budget-exhausted", "code": "BUDGET_EXHAUSTED", "expected": { "status": "error", "summary": "The chain budget is exhausted; the chain is soft-stopping.", "next_actions": [], "artifacts": [], "error": { "code": "BUDGET_EXHAUSTED", "retry": "Raise the chain budget or start a fresh chain.", "stopCondition": "Do not spawn new work on an exhausted budget." } } }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "$schema": "agenthost-continuity-deadman-fixtures-v1",
+  "contractId": "CONT-09",
+  "contractVersion": 1,
+  "seededSecret": "ah-test-deadman-secret-DO-NOT-LOG",
+  "monitoredAgents": ["claude", "codex", "gemini", "hermes", "kimi"],
+  "reasons": ["agent_missing", "handoff_stalled"],
+  "codes": ["AGENT_MISSING", "HANDOFF_STALLED", "AGENT_RECOVERED", "MONITOR_UNSUPPORTED", "CHANNEL_UNAVAILABLE", "THRESHOLD_INVALID", "QUIET_HOURS_INVALID"],
+  "livenessSources": ["running_ledger_record_last_update", "activity_tracker_observation", "produced_result", "forward_progress_handoff_transition"],
+  "excludedLivenessSources": ["narration_cadence", "running_record_mere_presence", "failure_handoff_transition"],
+  "escalationLadder": ["push", "email", "channel"],
+  "rungDelaysMs": { "push": 0, "email": 600000, "channel": 1800000 },
+  "defaults": { "thresholdMs": 900000, "cooldownMs": 21600000 },
+  "thresholdRangeMs": { "min": 60000, "max": 1000000000 },
+  "recoveryDebounceMs": 120000,
+  "bootGraceMs": 120000,
+  "attentionItemFields": ["agentId", "reason", "threshold", "lastObservationMs", "escalationRung", "state", "quietHoursSuppressed", "dedupKey"],
+  "perAgentThresholdsMs": { "claude": 300000, "codex": 900000 },
+  "livenessCases": [
+    { "id": "narration-cadence-is-not-liveness", "agent": "codex", "lastNarrationMsAgo": 30000, "lastDurableObservationMsAgo": 1800000, "thresholdMs": 900000, "expected": { "missing": true, "reason": "agent_missing" }, "note": "recent narration must NOT rescue an agent whose durable observation is stale" },
+    { "id": "running-record-present-but-stale-is-missing", "agent": "codex", "runningRecordNamesAgent": true, "runningRecordLastUpdateMsAgo": 1800000, "thresholdMs": 900000, "expected": { "missing": true, "reason": "agent_missing" }, "note": "BLOCKER B1: presence of a running record is not liveness; its last-update freshness is" },
+    { "id": "running-record-fresh-update-alive", "agent": "codex", "runningRecordNamesAgent": true, "runningRecordLastUpdateMsAgo": 120000, "thresholdMs": 900000, "expected": { "missing": false } },
+    { "id": "newest-of-multiple-sources-alive", "agent": "claude", "runningRecordLastUpdateMsAgo": 600000, "producedResultMsAgo": 60000, "thresholdMs": 300000, "expected": { "missing": false }, "note": "ledger stale but a produced_result is fresh -> newest-wins -> alive" },
+    { "id": "provider-clock-skew-not-false-missing", "agent": "claude", "producedResultProviderClockMsAgo": 360000, "producedResultBoxClockMsAgo": 60000, "thresholdMs": 300000, "expected": { "missing": false }, "note": "freshness uses the box clock, never the provider's slow clock" },
+    { "id": "forward-progress-handoff-refreshes-liveness", "agent": "codex", "handoffTransition": "accepted->completed", "transitionMsAgo": 60000, "thresholdMs": 900000, "expected": { "missing": false } },
+    { "id": "failure-handoff-transition-not-liveness", "agent": "codex", "handoffTransition": "accepted->blocked", "transitionMsAgo": 60000, "otherObservationMsAgo": 1800000, "thresholdMs": 900000, "expected": { "missing": true, "reason": "agent_missing" }, "note": "a lease-breach/expired transition is the opposite of liveness; it must not refresh the pulse" },
+    { "id": "disabled-agent-never-flagged", "agent": "kimi", "state": "disabled", "lastDurableObservationMsAgo": 999999999, "thresholdMs": 900000, "expected": { "missing": false } },
+    { "id": "parked-for-review-never-flagged", "agent": "gemini", "state": "human_review", "lastDurableObservationMsAgo": 999999999, "thresholdMs": 900000, "expected": { "missing": false } },
+    { "id": "idle-no-assigned-work-never-flagged", "agent": "hermes", "state": "idle", "hasAssignedWork": false, "lastDurableObservationMsAgo": 999999999, "thresholdMs": 900000, "expected": { "missing": false } },
+    { "id": "gated-on-live-bounded-blocker-never-flagged", "agent": "gemini", "state": "gated", "blockerLiveAndBounded": true, "lastDurableObservationMsAgo": 999999999, "thresholdMs": 900000, "expected": { "missing": false } },
+    { "id": "gated-on-terminal-blocker-is-missing", "agent": "gemini", "state": "gated", "blockerLiveAndBounded": false, "blockerState": "expired", "lastDurableObservationMsAgo": 999999999, "thresholdMs": 900000, "expected": { "missing": true, "reason": "agent_missing" }, "note": "gated is an alibi only while the awaited thing is live+bounded" },
+    { "id": "expected-live-crosses-threshold-missing", "agent": "claude", "state": "working", "hasAssignedWork": true, "lastDurableObservationMsAgo": 600000, "thresholdMs": 300000, "expected": { "missing": true, "reason": "agent_missing", "restartsAgent": false, "cancelsAgent": false, "autoFixes": false } },
+    { "id": "assignment-indeterminate-fails-safe-monitored", "agent": "codex", "hasAssignedWork": "indeterminate", "lastDurableObservationMsAgo": 1800000, "thresholdMs": 900000, "expected": { "monitored": true, "missing": true }, "note": "fail-safe: unknown assignment -> treated as expected-live and monitored" },
+    { "id": "boot-grace-suppresses-restart-gap", "agent": "claude", "sinceGatewayBootMs": 30000, "bootGraceMs": 120000, "lastDurableObservationMsAgo": 600000, "thresholdMs": 300000, "expected": { "missing": false }, "note": "restart wiped the volatile tracker; thresholds suspended during boot grace" }
+  ],
+  "thresholdCases": [
+    { "id": "per-agent-claude-tighter", "agent": "claude", "thresholdMs": 300000, "silenceMs": 400000, "expected": { "missing": true } },
+    { "id": "per-agent-codex-looser-same-silence-alive", "agent": "codex", "thresholdMs": 900000, "silenceMs": 400000, "expected": { "missing": false } },
+    { "id": "silence-exactly-at-threshold", "agent": "claude", "thresholdMs": 300000, "silenceMs": 300000, "expected": { "missing": false }, "note": "boundary: crossing requires exceeding; == is still alive" },
+    { "id": "silence-one-ms-over-threshold", "agent": "claude", "thresholdMs": 300000, "silenceMs": 300001, "expected": { "missing": true } },
+    { "id": "default-fallback-threshold", "agent": "gemini", "thresholdMs": 900000, "usesDefault": true, "silenceMs": 900001, "expected": { "missing": true }, "note": "an agent with no per-agent setting falls back to the default threshold" },
+    { "id": "threshold-below-min-rejected", "agent": "codex", "thresholdMs": 1000, "expected": { "errorCode": "THRESHOLD_INVALID" } },
+    { "id": "threshold-at-min-accepted-boundary", "agent": "codex", "thresholdMs": 60000, "expected": { "accepted": true }, "note": "exactly min is INCLUSIVE-valid (>= min); pins the boundary the prose '>= 60 s' leaves ambiguous" },
+    { "id": "threshold-at-max-accepted-boundary", "agent": "codex", "thresholdMs": 1000000000, "expected": { "accepted": true }, "note": "exactly max is INCLUSIVE-valid (<= max)" },
+    { "id": "threshold-above-max-rejected", "agent": "codex", "thresholdMs": 999999999999, "expected": { "errorCode": "THRESHOLD_INVALID" } }
+  ],
+  "dedupCases": [
+    { "id": "newly-missing-alerts", "prev": null, "found": [{ "agent": "claude", "reason": "agent_missing" }], "nowMs": 1000, "expected": { "toAlert": ["claude"] } },
+    { "id": "still-missing-within-cooldown-silent", "prev": { "claude|agent_missing": { "at": 1000 } }, "found": [{ "agent": "claude", "reason": "agent_missing" }], "nowMs": 2000, "cooldownMs": 21600000, "expected": { "toAlert": [] } },
+    { "id": "cooldown-elapsed-re-alerts", "prev": { "claude|agent_missing": { "at": 1000 } }, "found": [{ "agent": "claude", "reason": "agent_missing" }], "nowMs": 21603000, "cooldownMs": 21600000, "expected": { "toAlert": ["claude"] } },
+    { "id": "cooldown-exactly-at-boundary", "prev": { "claude|agent_missing": { "at": 1000 } }, "found": [{ "agent": "claude", "reason": "agent_missing" }], "nowMs": 21601000, "cooldownMs": 21600000, "expected": { "toAlert": ["claude"] }, "note": "delta == cooldown re-alerts (>=), matching stuck-lib" },
+    { "id": "duplicate-timer-tick-no-double-fire", "prev": { "claude|agent_missing": { "at": 1000 } }, "found": [{ "agent": "claude", "reason": "agent_missing" }], "nowMs": 1000, "expected": { "toAlert": [] } },
+    { "id": "clock-skew-backward-no-double-fire", "prev": { "claude|agent_missing": { "at": 2000 } }, "found": [{ "agent": "claude", "reason": "agent_missing" }], "nowMs": 1000, "expected": { "toAlert": [] }, "note": "negative delta must not be read as cooldown-elapsed" },
+    { "id": "mixed-sweep-per-agent-dedup", "prev": { "codex|agent_missing": { "at": 1000 } }, "found": [{ "agent": "claude", "reason": "agent_missing" }, { "agent": "codex", "reason": "agent_missing" }], "nowMs": 2000, "cooldownMs": 21600000, "expected": { "toAlert": ["claude"] }, "note": "codex still in cooldown; a global cooldown bug would wrongly suppress claude too" },
+    { "id": "two-reasons-one-agent-two-stable-items", "prev": { "claude|agent_missing": { "at": 1000 }, "claude|handoff_stalled": { "at": 1000 } }, "found": [{ "agent": "claude", "reason": "agent_missing" }, { "agent": "claude", "reason": "handoff_stalled" }], "nowMs": 2000, "cooldownMs": 21600000, "expected": { "toAlert": [] }, "note": "BLOCKER B2: (agent,reason) keying holds both reasons without flapping; neither re-alerts inside cooldown" },
+    { "id": "recovered-agent-pruned-and-rearmed", "prev": { "claude|agent_missing": { "at": 1000 } }, "found": [], "nowMs": 200000, "recoveryDebounceMs": 120000, "expected": { "toAlert": [], "pruned": ["claude|agent_missing"] } },
+    { "id": "recover-then-miss-within-debounce-no-flap", "prev": { "claude|agent_missing": { "at": 1000 } }, "recoveredAtMs": 5000, "reMissedAtMs": 60000, "recoveryDebounceMs": 120000, "expected": { "toAlert": [], "retainedNotRearmed": true }, "note": "oscillation around threshold yields one sticky item, not a flap" }
+  ],
+  "escalationCases": [
+    { "id": "ladder-rung-1-push-immediate", "ackd": false, "elapsedMs": 0, "expected": { "rung": "push" } },
+    { "id": "ladder-rung-2-email-at-delay", "ackd": false, "elapsedMs": 600000, "expected": { "rung": "email" } },
+    { "id": "ladder-rung-3-channel-at-delay", "ackd": false, "elapsedMs": 1800000, "expected": { "rung": "channel" } },
+    { "id": "ladder-just-under-email-still-push", "ackd": false, "elapsedMs": 599999, "expected": { "rung": "push", "deliveredRungsExclude": ["email", "channel"] }, "note": "real no-skip: just under email's delay, only push has fired" },
+    { "id": "acknowledged-stops-escalation", "ackd": true, "elapsedMs": 1800000, "expected": { "rung": "none" } },
+    { "id": "cooldown-realert-at-top-rung-redelivers-top-only", "ackd": false, "atTopRung": "channel", "cooldownReAlert": true, "expected": { "rung": "channel", "resetsToRung1": false, "clearsAck": false }, "note": "a 6h cooldown re-alert on a top-rung item re-delivers channel only" }
+  ],
+  "quietHoursCases": [
+    { "id": "quiet-hours-suppress-rungs-2plus-not-push", "inQuietHours": true, "unacked": true, "expected": { "pushDelivered": true, "higherRungsDelivered": false, "attentionItemRecorded": true }, "note": "first-rung push is never suppressed; away history stays truthful" },
+    { "id": "quiet-hours-end-resumes-from-rung-reached", "quietHoursTransition": "true->false", "rungReachedBeforeWindow": "email", "elapsedAcrossWindowMs": 30000000, "expected": { "resumesFromRung": "email", "recomputesFromElapsed": false }, "note": "held rungs resume from the rung reached, not recomputed from elapsed time" },
+    { "id": "outside-quiet-hours-escalates", "inQuietHours": false, "expected": { "higherRungsDelivered": true, "attentionItemRecorded": true } },
+    { "id": "malformed-quiet-hours-rejected", "quietHours": "25:00-99:00", "expected": { "errorCode": "QUIET_HOURS_INVALID" } },
+    { "id": "effectively-24x7-window-rejected", "quietHours": "00:00-23:59", "spanExceedsMax": true, "expected": { "errorCode": "QUIET_HOURS_INVALID" }, "note": "a window that mutes alerting ~24x7 disarms the switch" }
+  ],
+  "recoveryCases": [
+    { "id": "recovery-raises-visible-resolution", "agent": "claude", "wasMissing": true, "freshObservationSustainedMs": 120000, "recoveryDebounceMs": 120000, "expected": { "event": "AGENT_RECOVERED", "resolvesAttentionItem": true, "visibleInInbox": true } },
+    { "id": "handoff-stall-recovery-resolves", "agent": "claude", "wasReason": "handoff_stalled", "handoffReissued": true, "expected": { "event": "AGENT_RECOVERED", "resolvesAttentionItem": true } }
+  ],
+  "handoffSeamCases": [
+    { "id": "handoff-lease-breach-raises-stall", "source": "CONT-08", "handoffState": "blocked", "leaseBreached": true, "agentOtherwiseAlive": true, "expected": { "raises": true, "reason": "handoff_stalled" } },
+    { "id": "handoff-stall-single-item-not-duplicated", "source": "CONT-08", "handoffState": "blocked", "leaseBreached": true, "agentOtherwiseAlive": true, "cont08RecordsTransition": true, "expected": { "raises": true, "reason": "handoff_stalled", "duplicatesCont08Item": false }, "note": "the lease-breach inbox item is ONE item shared with CONT-08, not two" },
+    { "id": "missing-agent-subsumes-its-handoff-breach", "source": "CONT-08", "handoffState": "blocked", "leaseBreached": true, "agentOtherwiseAlive": false, "agentAlsoMissing": true, "expected": { "raises": true, "reason": "agent_missing", "handoffStalledSubsumed": true }, "note": "one root cause (agent died, handoff with it) -> one agent_missing item" },
+    { "id": "agent-alive-and-handoffs-progressing-no-stall", "agentOtherwiseAlive": true, "leaseBreached": false, "expected": { "raises": false } }
+  ],
+  "restartCases": [
+    { "id": "gateway-restart-preserves-unresolved-item", "unresolvedBeforeRestart": true, "expected": { "unresolvedAfterRestart": true, "reAlertsAfterRestart": false } },
+    { "id": "gateway-restart-preserves-ack-no-rearm", "ackedBeforeRestart": true, "rungBeforeRestart": "channel", "expected": { "ackdAfterRestart": true, "rearmsLadder": false, "rungAfterRestart": "channel" }, "note": "restart must not re-escalate an already-acknowledged silence" }
+  ],
+  "shapeCases": [
+    { "id": "attention-item-carries-only-bounded-fields", "expected": { "keys": ["agentId", "reason", "threshold", "lastObservationMs", "escalationRung", "state", "quietHoursSuppressed", "dedupKey"], "forbiddenKeys": ["prompt", "output", "credential"] } }
+  ],
+  "secretInputCases": [
+    { "id": "secret-in-observation-not-leaked", "injectField": "sourceObservationPayload", "injectValueIsSeededSecret": true, "expected": { "attentionItemStoresRawSecret": false, "deliveredPayloadStoresRawSecret": false, "influencesEscalation": false } }
+  ],
+  "channelCases": [
+    { "id": "missing-channel-reported", "channel": "discord", "configured": false, "expected": { "errorCode": "CHANNEL_UNAVAILABLE" } },
+    { "id": "unknown-agent-monitor-unsupported", "agent": "openclaw", "expected": { "errorCode": "MONITOR_UNSUPPORTED" } },
+    { "id": "known-agent-runtime-presence-vanishes-is-missing-not-unsupported", "agent": "codex", "wasExpectedLive": true, "cont06InstalledRungFails": true, "expected": { "reason": "agent_missing", "notErrorCode": "MONITOR_UNSUPPORTED" }, "note": "the roster (CONT-00 KNOWN_AGENTS) is static; a known agent whose CONT-06 installed rung fails has lost runtime presence, which is agent_missing, not an off-roster id" }
+  ],
+  "envelopeCases": [
+    { "id": "envelope-warning-agent-missing", "code": "AGENT_MISSING", "expected": { "status": "warning", "summary": "Claude has not been observed for longer than its 5-minute threshold.", "next_actions": ["Check the Claude worker."], "artifacts": [] } },
+    { "id": "envelope-warning-handoff-stalled", "code": "HANDOFF_STALLED", "expected": { "status": "warning", "summary": "Claude's accepted handoff has stalled past its execution lease.", "next_actions": ["Reissue or reassign the stalled handoff."], "artifacts": [] } },
+    { "id": "envelope-success-recovered", "code": "AGENT_RECOVERED", "expected": { "status": "success", "summary": "Claude is alive again; the attention item is resolved.", "next_actions": [], "artifacts": [] } },
+    { "id": "envelope-error-threshold-invalid", "code": "THRESHOLD_INVALID", "expected": { "status": "error", "summary": "That liveness threshold is out of range.", "next_actions": [], "artifacts": [], "error": { "code": "THRESHOLD_INVALID", "retry": "Set a threshold within the allowed range, then save.", "stopCondition": "Do not monitor with an out-of-range threshold." } } },
+    { "id": "envelope-error-channel-unavailable", "code": "CHANNEL_UNAVAILABLE", "expected": { "status": "error", "summary": "That escalation channel is not configured.", "next_actions": [], "artifacts": [], "error": { "code": "CHANNEL_UNAVAILABLE", "retry": "Configure the channel in Channel Configuration, then re-enable escalation.", "stopCondition": "Do not escalate to an unconfigured channel." } } },
+    { "id": "envelope-error-monitor-unsupported", "code": "MONITOR_UNSUPPORTED", "expected": { "status": "error", "summary": "That agent is not a monitored teammate.", "next_actions": [], "artifacts": [], "error": { "code": "MONITOR_UNSUPPORTED", "retry": "Monitor only a known roster agent.", "stopCondition": "Do not create a monitor for an unknown agent." } } },
+    { "id": "envelope-error-quiet-hours-invalid", "code": "QUIET_HOURS_INVALID", "expected": { "status": "error", "summary": "That quiet-hours window is invalid.", "next_actions": [], "artifacts": [], "error": { "code": "QUIET_HOURS_INVALID", "retry": "Set a well-formed window within the maximum span, then save.", "stopCondition": "Do not accept a window that mutes alerting around the clock." } } }
+  ]
+}

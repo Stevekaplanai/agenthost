@@ -1,0 +1,16 @@
+---
+id: f6f3a596a57e-reference-openrouter-kimi-provider
+trigger: "When configuring OpenRouter requests with tool calling or strict schemas"
+confidence: 0.9
+domain: "integration"
+source: "memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/reference_openrouter_kimi_provider.md"
+scope: global
+---
+
+# Reference Openrouter Kimi Provider
+
+## Action
+Set `provider: { require_parameters: true }` to ensure the routed provider supports all requested features.
+
+## Evidence
+Seeded from memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/reference_openrouter_kimi_provider.md via seed_instincts.py.

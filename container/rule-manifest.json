@@ -1,0 +1,172 @@
+{
+  "$comment": "Rule Constitution R0/R6 made mechanical (seeded 2026-07-26). Every governance rule names the file+marker that ENFORCES it and the test file+marker whose removal turns the suite RED. test/rule-manifest.test.js is the lint: an entry whose markers vanish fails the build, so a rule can no longer be silently unwired. A rule with no mechanical enforcement yet MUST carry acknowledgedGap (an explicit, visible debt) \u2014 omitting both fails the lint. Grow this file with every new rail.",
+  "rules": [
+    {
+      "id": "board-intent-denials-in-band",
+      "rule": "A denied board write is never silent: it is audited, returned to the caller, and push-notified to the operator.",
+      "source": "launch-eve handoff B3 (2026-07-26)",
+      "enforcedBy": {
+        "file": "container/gate.js",
+        "mustContain": "denied.push({ id: it.id"
+      },
+      "redTest": {
+        "file": "test/gate-command-center.test.js",
+        "mustContain": "every denial audit collects a matching in-band denial"
+      }
+    },
+    {
+      "id": "operator-freeze-holds-through-completion",
+      "rule": "A card the operator froze is never completed over the freeze, even when the freeze postdates the run's start.",
+      "source": "launch-eve handoff B4 (2026-07-26)",
+      "enforcedBy": {
+        "file": "container/gate.js",
+        "mustContain": "autonomy_frozen_hold"
+      },
+      "redTest": {
+        "file": "test/gate-command-center.test.js",
+        "mustContain": "a fresh frozen check precedes the pipeline board-complete"
+      }
+    },
+    {
+      "id": "handoff-children-human-gated",
+      "rule": "Autonomous handoff children are created blocked; a human (or the gate's safe-verb audit) releases them, never the proposing engine.",
+      "source": "team-charter.md coordination rules",
+      "enforcedBy": {
+        "file": "container/gate.js",
+        "mustContain": "parseHandoffs"
+      },
+      "redTest": {
+        "file": "test/gate-command-center.test.js",
+        "mustContain": "handoff children are created blocked (human-gated), never todo/queued"
+      }
+    },
+    {
+      "id": "lexical-gate-fails-closed",
+      "rule": "The task gate is lexical and fail-closed: only a clearly safe leading verb with no gated keyword anywhere auto-runs; everything else waits for a human.",
+      "source": "team-charter.md standing rule 2",
+      "enforcedBy": {
+        "file": "container/chains-lib.js",
+        "mustContain": "isHumanGated"
+      },
+      "redTest": {
+        "file": "test/chains-lib.test.js",
+        "mustContain": "isHumanGated FAILS CLOSED"
+      }
+    },
+    {
+      "id": "social-exception-inverted-guard",
+      "rule": "The social-posting exception neutralizes ONLY content verbs; every destructive/infra/credential keyword still hard-gates inside a social task.",
+      "source": "team-charter.md standing rule 2 exception (2026-07-18)",
+      "enforcedBy": {
+        "file": "container/gate.js",
+        "mustContain": "function autonomySocial"
+      },
+      "redTest": {
+        "file": "test/chains-lib.test.js",
+        "mustContain": "social exception invariant: each dangerous keyword still gates inside a social task"
+      }
+    },
+    {
+      "id": "jail-env-single-credential",
+      "rule": "A sandboxed engine's child env carries only {PATH,HOME,(TERM/LANG)} plus its one inference credential \u2014 never the box's other secrets.",
+      "source": "RULE-CONSTITUTION.md Fix 2",
+      "enforcedBy": {
+        "file": "container/gate.js",
+        "mustContain": "sandboxedClaudeEnv"
+      },
+      "redTest": {
+        "file": "test/chains-lib.test.js",
+        "mustContain": "drops every secret"
+      }
+    },
+    {
+      "id": "read-jail-secret-paths-absent",
+      "rule": "The autonomous read-jail chroot contains only allowlisted roots; home and secret paths are absent, not merely read-only.",
+      "source": "team-charter.md egress rules",
+      "enforcedBy": {
+        "file": "container/gate.js",
+        "mustContain": "buildReadJail"
+      },
+      "redTest": {
+        "file": "test/chains-lib.test.js",
+        "mustContain": "buildReadJail"
+      }
+    },
+    {
+      "id": "chain-budget-ceilings",
+      "rule": "Autonomous chains stop at hard ceilings (runs/time/tokens/dollars) with a soft zone at 80%; the gate enforces this, engines only self-throttle.",
+      "source": "team-charter.md standing rule 4",
+      "enforcedBy": {
+        "file": "container/gate.js",
+        "mustContain": "chains.configureCost"
+      },
+      "redTest": {
+        "file": "test/chains-lib.test.js",
+        "mustContain": "soft zone triggers at 80%"
+      }
+    },
+    {
+      "id": "oversight-reuses-live-predicates",
+      "rule": "Watchers and dashboards reuse the live in-path enforcement predicates, never a parallel copy that can drift.",
+      "source": "TRANSCENDENCE.md P6 (channelHealthTick law)",
+      "enforcedBy": {
+        "file": "container/gate.js",
+        "mustContain": "channelHealthTick"
+      },
+      "redTest": {
+        "file": "test/gate-channel-health-watch.test.js",
+        "mustContain": "channelHealthTick"
+      }
+    },
+    {
+      "id": "gemini-no-board-state-from-memory",
+      "rule": "Gemini has no shell and no board read path; it never states board contents from memory \u2014 it says it cannot read the board and hands the read to an engine that can (Claude/Hermes in chat).",
+      "source": "launch-eve handoff B2 (2026-07-26)",
+      "enforcedBy": {
+        "file": "container/team-charter.md",
+        "mustContain": "Gemini: you cannot read the board"
+      },
+      "redTest": {
+        "file": "test/gate-command-center.test.js",
+        "mustContain": "Gemini board honesty"
+      },
+      "acknowledgedGap": "The markers pin the charter text and its test, but the behavior itself is prose-governed: no code inspects a Gemini reply for fabricated board claims. Mechanical option (future): the gate cross-checks task ids Gemini cites against the live board and flags unknown/archived ids."
+    },
+    {
+      "id": "reboot-orphaned-claims-reaped-at-boot-only",
+      "rule": "Every in-box claim acquired before the current machine boot is reaped exactly once at store construction, regardless of remaining TTL, before any scheduler tick; external claims and claims acquired after boot stay quarantined and fail-closed.",
+      "source": "launch-morning deadlock 2026-07-27 (four reboots, four zombie claims, dispatcher denied every 30s)",
+      "enforcedBy": {
+        "file": "container/claim-store.js",
+        "mustContain": "reapExpiredAtBoot"
+      },
+      "redTest": {
+        "file": "test/claim-reaper.test.js",
+        "mustContain": "unexpired two-hour in-box claim from before machine boot is reaped"
+      }
+    },
+    {
+      "id": "stale-clone-sync-before-edit",
+      "rule": "Before editing the box's repo clone, an engine must fetch and fast-forward it to origin/main, stopping if the clone holds local work.",
+      "source": "team-charter.md (B1 fix, 2026-07-26)",
+      "enforcedBy": {
+        "file": "container/team-charter.md",
+        "mustContain": "Sync the clone FIRST"
+      },
+      "acknowledgedGap": "Prose-only: the charter instructs, but no code forces the sync before an edit lands. Mechanical option (future): the gate's git-ladder commit path refuses to commit in a clone that is behind origin."
+    },
+    {
+      "id": "ttyd-terminal-is-permission-gated",
+      "rule": "The agent's writable terminal never listens on a network port. It binds a UNIX socket owned by agent and the boxstate group inside a 0750 dir, so the kernel gates who may type as the agent, and no credential is ever placed in argv (/proc/<pid>/cmdline is world-readable).",
+      "source": "ttyd credential hole found 2026-07-27 (launch day), reported by the box",
+      "enforcedBy": {
+        "file": "container/start.sh",
+        "mustContain": "ttyd -i \"$TTYD_SOCK\" -U \"agent:boxstate\""
+      },
+      "redTest": {
+        "file": "test/gate-command-center.test.js",
+        "mustContain": "ttyd listens on a permissioned UNIX socket"
+      }
+    }
+  ]
+}

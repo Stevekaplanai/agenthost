@@ -1,0 +1,16 @@
+---
+id: 15b1b47eb4a8-saaspocolypse-project
+trigger: "When installing BMAD in the Claude Code terminal"
+confidence: 0.8
+domain: "workflow"
+source: "memory/C--Users-User/saaspocolypse_project.md"
+scope: global
+---
+
+# Saaspocolypse Project
+
+## Action
+Use the workspace installer workaround because the interactive TUI does not render.
+
+## Evidence
+Seeded from memory/C--Users-User/saaspocolypse_project.md via seed_instincts.py.

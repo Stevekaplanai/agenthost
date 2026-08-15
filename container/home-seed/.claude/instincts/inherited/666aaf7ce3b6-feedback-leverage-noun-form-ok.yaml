@@ -1,0 +1,16 @@
+---
+id: 666aaf7ce3b6-feedback-leverage-noun-form-ok
+trigger: "When checking drafts for the banned word 'leverage'"
+confidence: 0.9
+domain: "content"
+source: "memory/C--Users-User-content-engine/feedback_leverage_noun_form_ok.md"
+scope: global
+---
+
+# Feedback Leverage Noun Form Ok
+
+## Action
+Allow noun forms like 'high-leverage' but flag corporate verb forms like 'leverage X to Y'.
+
+## Evidence
+Seeded from memory/C--Users-User-content-engine/feedback_leverage_noun_form_ok.md via seed_instincts.py.

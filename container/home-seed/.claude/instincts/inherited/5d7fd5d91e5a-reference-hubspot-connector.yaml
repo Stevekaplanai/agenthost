@@ -1,0 +1,16 @@
+---
+id: 5d7fd5d91e5a-reference-hubspot-connector
+trigger: "When selecting a HubSpot MCP connector"
+confidence: 0.4
+domain: "integration"
+source: "memory/C--Users-User-OneDrive-Documents/reference_hubspot_connector.md"
+scope: global
+---
+
+# Reference Hubspot Connector
+
+## Action
+Use the direct connection tools (mcp__7153742a-*) instead of the expired OAuth tools.
+
+## Evidence
+Seeded from memory/C--Users-User-OneDrive-Documents/reference_hubspot_connector.md via seed_instincts.py.

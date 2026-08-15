@@ -1,0 +1,16 @@
+---
+id: b1da2e37ab71-feedback-admin-email
+trigger: "When configuring auth, admin allowlists, or login surfaces"
+confidence: 0.9
+domain: "security"
+source: "memory/C--Users-User/feedback_admin_email.md"
+scope: global
+---
+
+# Feedback Admin Email
+
+## Action
+Use steve@stevekaplan.ai instead of the email from the system context.
+
+## Evidence
+Seeded from memory/C--Users-User/feedback_admin_email.md via seed_instincts.py.

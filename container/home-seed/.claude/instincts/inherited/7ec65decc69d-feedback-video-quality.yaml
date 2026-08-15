@@ -1,0 +1,16 @@
+---
+id: 7ec65decc69d-feedback-video-quality
+trigger: "when writing text-to-speech video scripts"
+confidence: 0.8
+domain: "content"
+source: "memory/C--Users-User/feedback_video_quality.md"
+scope: global
+---
+
+# Feedback Video Quality
+
+## Action
+Spell out acronyms, numbers, and complex names phonetically.
+
+## Evidence
+Seeded from memory/C--Users-User/feedback_video_quality.md via seed_instincts.py.

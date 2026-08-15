@@ -1,0 +1,16 @@
+---
+id: 9f5d32d8943c-pnpm-vercel-lockfile-fix
+trigger: "When installing packages in a project with a pnpm lockfile"
+confidence: 0.9
+domain: "workflow"
+source: "skills/learned/pnpm-vercel-lockfile-fix.md"
+scope: global
+---
+
+# Pnpm Vercel Lockfile Fix
+
+## Action
+Use pnpm add instead of npm install to prevent lockfile desync.
+
+## Evidence
+Seeded from skills/learned/pnpm-vercel-lockfile-fix.md via seed_instincts.py.

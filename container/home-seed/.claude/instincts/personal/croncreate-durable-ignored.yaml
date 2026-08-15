@@ -1,0 +1,30 @@
+---
+id: croncreate-durable-ignored
+trigger: "when user asks to schedule a reminder more than 1 day in the future via CronCreate"
+confidence: 0.9
+domain: "scheduling"
+source: "session-observation"
+scope: global
+created_at: "2026-05-02"
+last_observed_at: "2026-05-02"
+---
+
+# CronCreate `durable: true` is silently ignored — all crons are session-only in this environment
+
+## Action
+
+Don't promise long-horizon Cron reminders without a backup plan. The `durable: true` parameter is silently ignored — `CronList` shows `[session-only]` for every cron regardless of what was passed. Crons die when the Claude session ends.
+
+For reminders within a single session (minutes to hours), Cron is fine. For >1 day:
+
+1. Create the cron anyway as best-effort backup (will fire if session is alive)
+2. **Tell the user explicitly**: "These crons are session-only — for guaranteed reminders, also add to your calendar"
+3. **Save to project memory** as a backup mechanism — memory auto-loads in every future Claude session, so the next session opened between now and the trigger date will see the pending action when context surfaces it
+
+## Evidence
+
+- 2026-05-02: Created two cron jobs with `durable: true` for 12-day and 30-day reminders. Both reported `[session-only]` despite the param. Verified via CronList.
+
+## Related
+
+- Memory entry: `feedback_cron_durable_ignored_session_only.md`

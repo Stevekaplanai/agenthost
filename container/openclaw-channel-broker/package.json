@@ -1,0 +1,7 @@
+{
+  "name": "openclaw-plugin-agenthost-channel-broker",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "private": true,
+  "openclaw": { "extensions": ["./index.js"] }
+}

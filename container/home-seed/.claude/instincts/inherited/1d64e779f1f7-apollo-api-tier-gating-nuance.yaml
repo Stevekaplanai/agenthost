@@ -1,0 +1,16 @@
+---
+id: 1d64e779f1f7-apollo-api-tier-gating-nuance
+trigger: "When Apollo API returns 403 API_INACCESSIBLE"
+confidence: 0.8
+domain: "integration"
+source: "vault/03_Insights/Apollo API Tier Gating Nuance.md"
+scope: global
+---
+
+# Apollo Api Tier Gating Nuance
+
+## Action
+Verify the account has an API-specific subscription plan rather than just web app credits.
+
+## Evidence
+Seeded from vault/03_Insights/Apollo API Tier Gating Nuance.md via seed_instincts.py.

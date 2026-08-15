@@ -1,0 +1,16 @@
+---
+id: 31c1a09cf509-viral-share-giveaway-system
+trigger: "when generating user-facing referral or share codes"
+confidence: 0.9
+domain: "code-style"
+source: "vault/03_Insights/Viral Share Giveaway System.md"
+scope: global
+---
+
+# Viral Share Giveaway System
+
+## Action
+Use an ambiguity-free character set that excludes easily confused characters like 0, O, 1, I, and L.
+
+## Evidence
+Seeded from vault/03_Insights/Viral Share Giveaway System.md via seed_instincts.py.

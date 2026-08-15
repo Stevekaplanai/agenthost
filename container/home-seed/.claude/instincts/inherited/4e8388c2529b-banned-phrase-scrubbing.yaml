@@ -1,0 +1,16 @@
+---
+id: 4e8388c2529b-banned-phrase-scrubbing
+trigger: "when replacing banned phrases in text"
+confidence: 0.8
+domain: "content"
+source: "vault/03_Insights/Banned Phrase Scrubbing.md"
+scope: global
+---
+
+# Banned Phrase Scrubbing
+
+## Action
+Use paragraph-level LLM rewrites instead of regex replacements to preserve grammar.
+
+## Evidence
+Seeded from vault/03_Insights/Banned Phrase Scrubbing.md via seed_instincts.py.

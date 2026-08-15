@@ -1,0 +1,23 @@
+{
+  "model": "opus",
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "python /home/steve/Projects/operator-brain/capture.py --from-hook" },
+          { "type": "command", "command": "bash /home/steve/.claude/hooks/notify.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          { "type": "command", "command": "node /home/steve/tools/lint-on-write.mjs" },
+          { "type": "command", "command": "python /home/steve/Projects/operator-brain/capture.py --write" }
+        ]
+      }
+    ]
+  }
+}

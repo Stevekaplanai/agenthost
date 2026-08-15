@@ -1,0 +1,16 @@
+---
+id: 2b22d5d4ea1d-kimi-k2-6-reasoning-model-token-budget-issue
+trigger: "When handling API responses from reasoning LLMs"
+confidence: 0.8
+domain: "integration"
+source: "vault/03_Insights/Kimi K2.6 reasoning model token budget issue.md"
+scope: global
+---
+
+# Kimi K2.6 Reasoning Model Token Budget Issue
+
+## Action
+Handle null message content by checking the reasoning field, or switch to a non-reasoning model.
+
+## Evidence
+Seeded from vault/03_Insights/Kimi K2.6 reasoning model token budget issue.md via seed_instincts.py.

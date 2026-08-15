@@ -1,0 +1,16 @@
+---
+id: f538af105a4f-feedback-powershell-on-windows
+trigger: "When executing native CLIs on Windows"
+confidence: 0.9
+domain: "workflow"
+source: "memory/C--Users-User/feedback_powershell_on_windows.md"
+scope: global
+---
+
+# Feedback Powershell On Windows
+
+## Action
+Use the native PowerShell tool instead of Bash to prevent DNS and PATH sandboxing issues.
+
+## Evidence
+Seeded from memory/C--Users-User/feedback_powershell_on_windows.md via seed_instincts.py.

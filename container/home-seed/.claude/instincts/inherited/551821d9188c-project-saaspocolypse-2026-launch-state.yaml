@@ -1,0 +1,16 @@
+---
+id: 551821d9188c-project-saaspocolypse-2026-launch-state
+trigger: "scheduling future emails via the Resend API"
+confidence: 0.9
+domain: "integration"
+source: "memory/C--Users-User-content-engine/project_saaspocolypse_2026_launch_state.md"
+scope: global
+---
+
+# Project Saaspocolypse 2026 Launch State
+
+## Action
+Enforce a maximum 30-day window for scheduled dates to prevent silent immediate delivery.
+
+## Evidence
+Seeded from memory/C--Users-User-content-engine/project_saaspocolypse_2026_launch_state.md via seed_instincts.py.

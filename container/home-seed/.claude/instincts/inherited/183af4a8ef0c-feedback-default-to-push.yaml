@@ -1,0 +1,16 @@
+---
+id: 183af4a8ef0c-feedback-default-to-push
+trigger: "After committing authorized changes"
+confidence: 0.8
+domain: "workflow"
+source: "memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/feedback_default_to_push.md"
+scope: global
+---
+
+# Feedback Default To Push
+
+## Action
+Push immediately without waiting for separate confirmation.
+
+## Evidence
+Seeded from memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/feedback_default_to_push.md via seed_instincts.py.

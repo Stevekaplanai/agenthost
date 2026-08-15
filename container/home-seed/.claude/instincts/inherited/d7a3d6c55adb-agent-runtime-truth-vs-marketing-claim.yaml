@@ -1,0 +1,16 @@
+---
+id: d7a3d6c55adb-agent-runtime-truth-vs-marketing-claim
+trigger: "comparing marketed capabilities against actual implementation"
+confidence: 0.7
+domain: "workflow"
+source: "vault/03_Insights/Agent runtime truth vs. marketing claim.md"
+scope: global
+---
+
+# Agent Runtime Truth Vs. Marketing Claim
+
+## Action
+Map actual runtime state against marketing claims to identify gaps and prioritize the build sequence.
+
+## Evidence
+Seeded from vault/03_Insights/Agent runtime truth vs. marketing claim.md via seed_instincts.py.

@@ -1,0 +1,16 @@
+---
+id: a1d5d340d529-apollo-api-key-plan-inheritance
+trigger: "When an Apollo API endpoint returns API_INACCESSIBLE after a plan upgrade"
+confidence: 0.9
+domain: "integration"
+source: "vault/03_Insights/Apollo Api Key Plan Inheritance.md"
+scope: global
+---
+
+# Apollo Api Key Plan Inheritance
+
+## Action
+Instruct the user to generate a new API key rather than waiting for propagation.
+
+## Evidence
+Seeded from vault/03_Insights/Apollo Api Key Plan Inheritance.md via seed_instincts.py.

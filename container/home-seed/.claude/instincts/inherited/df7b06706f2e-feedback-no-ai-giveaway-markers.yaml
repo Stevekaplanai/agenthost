@@ -1,0 +1,16 @@
+---
+id: df7b06706f2e-feedback-no-ai-giveaway-markers
+trigger: "When generating customer-facing content or copy"
+confidence: 0.8
+domain: "content"
+source: "memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/feedback_no_ai_giveaway_markers.md"
+scope: global
+---
+
+# Feedback No Ai Giveaway Markers
+
+## Action
+Avoid AI-giveaway typography like em-dashes, curly quotes, or emojis, and omit cliché LLM phrasing.
+
+## Evidence
+Seeded from memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/feedback_no_ai_giveaway_markers.md via seed_instincts.py.

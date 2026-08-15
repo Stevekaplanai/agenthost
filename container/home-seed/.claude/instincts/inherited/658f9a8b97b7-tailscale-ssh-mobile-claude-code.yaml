@@ -1,0 +1,16 @@
+---
+id: 658f9a8b97b7-tailscale-ssh-mobile-claude-code
+trigger: "Tailscale devices appear connected but cannot see each other"
+confidence: 0.9
+domain: "infra"
+source: "skills/learned/tailscale-ssh-mobile-claude-code.md"
+scope: global
+---
+
+# Tailscale Ssh Mobile Claude Code
+
+## Action
+Verify both devices authenticated using the exact same identity provider.
+
+## Evidence
+Seeded from skills/learned/tailscale-ssh-mobile-claude-code.md via seed_instincts.py.

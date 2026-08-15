@@ -1,0 +1,110 @@
+{
+  "$schema": "agenthost-continuity-discovery-fixtures-v1",
+  "contractId": "CONT-06",
+  "contractVersion": 1,
+  "seededSecret": "ah-test-discovery-secret-DO-NOT-LOG",
+  "knownAgents": ["claude", "codex", "gemini", "hermes", "kimi"],
+  "rungs": ["installed", "authenticated", "isolated", "authorized"],
+  "capabilityRequires": {
+    "chat": ["installed", "authenticated"],
+    "review": ["installed", "authenticated", "authorized"],
+    "terminal": ["installed", "authenticated", "isolated"],
+    "unattended": ["installed", "authenticated", "isolated", "authorized"],
+    "gitMaxRung": ["installed", "authenticated", "isolated", "authorized"]
+  },
+  "rungFailureCodes": {
+    "installed": "NOT_INSTALLED",
+    "authenticated": "NOT_AUTHENTICATED",
+    "isolated": "NOT_ISOLATED",
+    "authorized": "NOT_AUTHORIZED"
+  },
+  "codes": ["NOT_INSTALLED", "NOT_AUTHENTICATED", "NOT_ISOLATED", "NOT_AUTHORIZED", "CHECK_TIMEOUT", "CHECK_MALFORMED", "CHECK_STALE", "SOURCE_UNREACHABLE", "SETTINGS_REALITY_MISMATCH", "AGENT_UNKNOWN"],
+  "cacheTtlMs": { "installed": 300000 },
+  "liveRungs": ["authenticated", "isolated", "authorized"],
+  "observations": ["runtimeVersion", "installedTools", "connectedMcps", "availableModels", "loadedSkills", "workspace", "approvedActions"],
+  "enumerationCaps": { "tools": 200, "mcps": 50, "skills": 500 },
+  "gitLadderWriteRungFloor": 3,
+  "gitProposalAuthors": ["codex"],
+  "isolationScope": { "supportedAgents": ["codex"], "failsOpenToSharedWork": true },
+  "rungCases": [
+    { "id": "not-installed-lowest-rung", "rungs": { "installed": false, "authenticated": false, "isolated": false, "authorized": false }, "capability": "unattended", "expected": { "state": "unavailable", "failedRung": "installed", "failedRungs": ["installed", "authenticated", "isolated", "authorized"], "reasonCode": "NOT_INSTALLED", "recoveryPath": "Install the Codex runtime, then re-run discovery." } },
+    { "id": "installed-not-authenticated", "rungs": { "installed": true, "authenticated": false, "isolated": false, "authorized": false }, "capability": "chat", "expected": { "state": "unavailable", "failedRung": "authenticated", "failedRungs": ["authenticated"], "reasonCode": "NOT_AUTHENTICATED", "recoveryPath": "Add the required credential for Claude, then re-run discovery." } },
+    { "id": "authenticated-not-isolated", "rungs": { "installed": true, "authenticated": true, "isolated": false, "authorized": true }, "capability": "terminal", "expected": { "state": "unavailable", "failedRung": "isolated", "failedRungs": ["isolated"], "reasonCode": "NOT_ISOLATED", "recoveryPath": "Complete the isolation gate for Codex, then re-run discovery." } },
+    { "id": "isolated-not-authorized", "rungs": { "installed": true, "authenticated": true, "isolated": true, "authorized": false }, "capability": "unattended", "expected": { "state": "unavailable", "failedRung": "authorized", "failedRungs": ["authorized"], "reasonCode": "NOT_AUTHORIZED", "recoveryPath": "Grant unattended autonomy for Codex in Settings, then re-run discovery." } },
+    { "id": "lowest-failed-rung-and-full-set-reported", "rungs": { "installed": false, "authenticated": false, "isolated": true, "authorized": false }, "capability": "unattended", "expected": { "state": "unavailable", "failedRung": "installed", "failedRungs": ["installed", "authenticated", "authorized"], "reasonCode": "NOT_INSTALLED", "recoveryPath": "Install the runtime, then re-run discovery." }, "note": "lowest rung is the primary step; failedRungs carries every blocker so the operator sees the whole remediation cost at once" },
+    { "id": "all-rungs-pass-available", "rungs": { "installed": true, "authenticated": true, "isolated": true, "authorized": true }, "capability": "unattended", "expected": { "state": "available", "reasonCode": null, "failedRungs": [] } }
+  ],
+  "capabilityRequirementCases": [
+    { "id": "chat-needs-installed-authenticated-only", "capability": "chat", "rungs": { "installed": true, "authenticated": true, "isolated": false, "authorized": false }, "expected": { "state": "available" } },
+    { "id": "review-needs-authorized-not-isolated", "capability": "review", "rungs": { "installed": true, "authenticated": true, "isolated": false, "authorized": true }, "expected": { "state": "available" } },
+    { "id": "review-blocked-without-authorization", "capability": "review", "rungs": { "installed": true, "authenticated": true, "isolated": false, "authorized": false }, "expected": { "state": "unavailable", "failedRung": "authorized" } },
+    { "id": "terminal-needs-isolated-not-authorized", "capability": "terminal", "rungs": { "installed": true, "authenticated": true, "isolated": true, "authorized": false }, "expected": { "state": "available" } },
+    { "id": "terminal-is-not-an-autonomous-execution-licence", "capability": "terminal", "rungs": { "installed": true, "authenticated": true, "isolated": true, "authorized": false }, "expected": { "state": "available", "licensesAutonomousExecution": false }, "note": "terminal available without authorized proves it cannot license unattended/autonomous work" },
+    { "id": "gitrung-level-sufficient", "capability": "gitMaxRung", "requestedLevel": 4, "rungs": { "installed": true, "authenticated": true, "isolated": true, "authorized": true }, "grantedRungValue": 5, "expected": { "state": "available", "isExecutionReadyGuarantee": false }, "note": "value is a granted ceiling only; a commit/merge consumer still consults the Git Ladder's live per-proposal verdict" },
+    { "id": "gitrung-level-exact-boundary", "capability": "gitMaxRung", "requestedLevel": 4, "rungs": { "installed": true, "authenticated": true, "isolated": true, "authorized": true }, "grantedRungValue": 4, "expected": { "state": "available" }, "note": "granted == requested must be sufficient (>=), not just strictly greater" },
+    { "id": "gitrung-level-insufficient", "capability": "gitMaxRung", "requestedLevel": 5, "rungs": { "installed": true, "authenticated": true, "isolated": true, "authorized": true }, "grantedRungValue": 4, "expected": { "state": "unavailable", "reasonCode": "NOT_AUTHORIZED" } },
+    { "id": "non-codex-agent-write-rung-structurally-unavailable", "agent": "claude", "capability": "gitMaxRung", "requestedLevel": 3, "rungs": { "installed": true, "authenticated": true, "isolated": true, "authorized": true }, "grantedRungValue": 5, "expected": { "state": "unavailable", "failedRung": "authorized", "reasonCode": "NOT_AUTHORIZED" }, "note": "claude is not a gitProposalAuthor; a write rung (>= gitLadderWriteRungFloor 3) is structurally unavailable even with a generous grantedRungValue 5 -- the structural ceiling overrides the grant" }
+  ],
+  "inventoryCases": [
+    { "id": "rich-inventory-still-unavailable-without-authorization", "observations": { "loadedSkills": 247, "connectedMcps": 12, "runtimeVersion": "sonnet-4" }, "capability": "unattended", "rungs": { "installed": true, "authenticated": true, "isolated": true, "authorized": false }, "expected": { "state": "unavailable", "failedRung": "authorized", "inventoryConflatedWithCapability": false } },
+    { "id": "inventory-counts-are-display-not-decision", "observations": { "loadedSkills": 247, "connectedMcps": 12 }, "rungs": { "installed": true, "authenticated": true, "isolated": true, "authorized": true }, "capability": "unattended", "expected": { "state": "available", "countsShown": true, "countsGrantCapability": false }, "note": "routed through the same oracle: counts never substitute for a passing rung" }
+  ],
+  "enumerationCases": [
+    { "id": "mcp-enumeration-names-only-no-credentials", "connectedMcps": [{ "name": "github" }, { "name": "slack" }], "expected": { "exposesUrl": false, "exposesCredential": false, "exposesHeaders": false, "namesShown": true } },
+    { "id": "tools-at-cap-no-overflow", "toolCount": 200, "cap": 200, "expected": { "shown": 200, "overflowDisclosed": false } },
+    { "id": "tools-over-cap-by-one-summarized", "toolCount": 201, "cap": 200, "expected": { "shown": 200, "overflowDisclosed": true } },
+    { "id": "mcps-at-cap-no-overflow", "mcpCount": 50, "cap": 50, "expected": { "shown": 50, "overflowDisclosed": false } },
+    { "id": "mcps-over-cap-by-one-summarized", "mcpCount": 51, "cap": 50, "expected": { "shown": 50, "overflowDisclosed": true, "namesShown": true } },
+    { "id": "skills-at-cap-no-overflow", "skillCount": 500, "cap": 500, "expected": { "shown": 500, "overflowDisclosed": false } },
+    { "id": "skills-over-cap-by-one-summarized", "skillCount": 501, "cap": 500, "expected": { "shown": 500, "overflowDisclosed": true } }
+  ],
+  "secretInputCases": [
+    { "id": "secret-in-mcp-name-scrubbed", "injectField": "connectedMcps[].name", "injectValue": "ah-test-discovery-secret-DO-NOT-LOG", "expected": { "enumeratedNameContainsSecret": false, "redactedAsKeyShapedField": true } },
+    { "id": "secret-in-mcp-url-never-exposed", "injectField": "connectedMcps[].url", "injectValueIsSeededSecret": true, "expected": { "resultContainsSecret": false, "urlEverExposed": false } },
+    { "id": "secret-in-authenticated-observation-presence-only", "injectField": "authenticated.credentialValue", "injectValueIsSeededSecret": true, "expected": { "resultContainsSecret": false, "exposesPresenceShapeOnly": true } }
+  ],
+  "freshnessCases": [
+    { "id": "stale-installed-cache-does-not-upgrade-to-available", "rungChecked": "installed", "capability": "unattended", "rungsWhenObserved": { "installed": true, "authenticated": true, "isolated": true, "authorized": true }, "observedMsAgo": 300001, "cacheTtlMs": 300000, "expected": { "stale": true, "state": "unavailable", "reasonCode": "CHECK_STALE" } },
+    { "id": "cache-exact-ttl-boundary-still-fresh", "rungChecked": "installed", "observedMsAgo": 300000, "cacheTtlMs": 300000, "expected": { "stale": false }, "note": "== TTL is inclusive-fresh, not yet stale" },
+    { "id": "fresh-cache-within-ttl-trusted-and-available", "rungChecked": "installed", "capability": "chat", "observedMsAgo": 60000, "cacheTtlMs": 300000, "rungs": { "installed": true, "authenticated": true }, "expected": { "stale": false, "state": "available" } },
+    { "id": "cache-hit-avoids-respawn", "expensiveCheck": "cli-version", "cached": true, "expected": { "respawns": false } },
+    { "id": "authenticated-and-authorized-are-not-long-cached", "rung": "authenticated", "expected": { "onLiveRungsList": true, "cacheTtlMs": null }, "note": "revocable rungs are read live/near-zero freshness, never held for the long TTL" }
+  ],
+  "checkAtUseCases": [
+    { "id": "fresh-available-still-not-an-authorization-to-act", "discoveryState": "available", "discoveryFresh": true, "revokedAfterDiscoveryBeforeUse": true, "expected": { "resultAtDiscoveryTime": "available", "mustReverifyAtConsequence": true, "consequenceProceedsOnStaleAuthorization": false }, "note": "BLOCKER B3: a fresh available is an observation, not a licence; the consumer re-verifies authenticated+authorized at the point of consequence" },
+    { "id": "authenticated-presence-not-validity", "credentialNamePresent": true, "credentialValid": false, "capability": "chat", "expected": { "authenticatedRungPassesOnPresenceAlone": false, "requiresLiveValidityForSpendingActingCapability": true }, "note": "BLOCKER B2: presence proves the name exists, not that the credential still works" },
+    { "id": "isolated-requires-live-per-run-verdict-not-settings-flag", "settingsClaimIsolated": true, "gateLiveVerdict": "unproven", "capability": "terminal", "expected": { "state": "unavailable", "failedRung": "isolated", "reasonCode": "NOT_ISOLATED" }, "note": "BLOCKER B1: a settings flag or 'boot step ran' can never substitute for the gate's live per-run verdict" },
+    { "id": "isolated-fallback-to-shared-work-is-not-proven", "codexWorktreeCreationFailed": true, "fellBackToSharedWork": true, "capability": "terminal", "expected": { "state": "unavailable", "failedRung": "isolated", "reasonCode": "NOT_ISOLATED" }, "note": "the isolation gate's silent shared-~/work fallback must not read as isolated" },
+    { "id": "non-codex-agent-isolated-always-fails-by-scope", "agent": "claude", "capability": "terminal", "expected": { "state": "unavailable", "failedRung": "isolated", "reasonCode": "NOT_ISOLATED" }, "note": "isolation is Codex-only by disclosed scope; Claude/Gemini/Hermes/Kimi can never pass isolated today" }
+  ],
+  "conservativeCases": [
+    { "id": "check-timeout-fails-rung-conservatively", "rungChecked": "isolated", "outcome": "timeout", "capability": "terminal", "expected": { "state": "unavailable", "reasonCode": "CHECK_TIMEOUT" } },
+    { "id": "malformed-cli-output-unknown-not-optimistic", "observation": "runtimeVersion", "outcome": "malformed", "expected": { "runtimeVersion": "unknown", "state": "unavailable", "reasonCode": "CHECK_MALFORMED" } },
+    { "id": "source-unreachable-distinct-from-clean-negative", "rungChecked": "isolated", "outcome": "unreachable", "capability": "terminal", "expected": { "state": "unavailable", "reasonCode": "SOURCE_UNREACHABLE" }, "note": "distinct from authenticated-not-isolated, which is a reported negative, not an unreachable source" },
+    { "id": "settings-say-enabled-reality-says-no-per-capability-warning", "settingClaims": { "toolEnabled": true }, "realityObserves": { "toolPresent": false }, "capability": "terminal", "expected": { "state": "unavailable", "reasonCode": "SETTINGS_REALITY_MISMATCH", "discrepancyDisclosed": true, "envelopeStatus": "warning", "wholeResultErrored": false }, "note": "per-capability warning, never a whole-result error that denies the entire roster view" }
+  ],
+  "providerReuseCases": [
+    { "id": "available-models-reuses-cont01-no-second-probe", "source": "availableModels", "reusesCont01Observation": true, "expected": { "secondProviderProbeMade": false } }
+  ],
+  "versionCases": [
+    { "id": "runtime-upgrade-changes-observation", "before": "sonnet-4", "after": "sonnet-5", "expected": { "observedVersion": "sonnet-5", "reObserved": true } },
+    { "id": "runtime-downgrade-changes-observation", "before": "sonnet-5", "after": "sonnet-4", "expected": { "observedVersion": "sonnet-4", "reObserved": true } }
+  ],
+  "unknownStateCases": [
+    { "id": "presence-undeterminable-yields-unknown-not-unavailable-optimistic", "checkOutcome": "cannot-determine-presence", "expected": { "state": "unknown" }, "note": "distinct from unavailable: a provably-failed rung vs. presence that could not be determined at all" }
+  ],
+  "sweepCases": [
+    { "id": "multi-agent-sweep-mixed-availability", "agents": { "claude": { "capability": "chat", "state": "available" }, "codex": { "capability": "unattended", "state": "unavailable", "failedRung": "authorized" } }, "expected": { "independentPerAgentResults": true } },
+    { "id": "rung-flips-between-discoveries", "discoveryN": { "authorized": true, "state": "available" }, "discoveryNplus1": { "authorized": false, "state": "unavailable" }, "expected": { "flipsToUnavailable": true } }
+  ],
+  "agentCases": [
+    { "id": "unknown-agent-rejected", "agent": "openclaw", "expected": { "errorCode": "AGENT_UNKNOWN" } },
+    { "id": "kimi-conservative-unavailable-baseline", "agent": "kimi", "rungs": { "installed": false, "authenticated": false, "isolated": false, "authorized": false }, "capability": "chat", "expected": { "state": "unavailable", "failedRung": "installed", "reasonCode": "NOT_INSTALLED" } }
+  ],
+  "envelopeCases": [
+    { "id": "envelope-success-capability-result", "code": null, "expected": { "status": "success", "summary": "Claude: 247 skills, 12 MCPs, Sonnet 4 -- cleared for review only (not unattended: workspace isolation unproven).", "next_actions": [], "artifacts": [{ "type": "capability_result", "agent": "claude" }] }, "note": "flagship example corrected: Claude is not isolated today, so it cannot be shown cleared for unattended coding" },
+    { "id": "envelope-warning-settings-mismatch", "code": "SETTINGS_REALITY_MISMATCH", "expected": { "status": "warning", "summary": "A Codex setting disagrees with the observed runtime; terminal is unavailable until reconciled.", "next_actions": ["Reconcile the setting with the observed runtime."], "artifacts": [{ "type": "capability_result", "agent": "codex" }] } },
+    { "id": "envelope-error-agent-unknown", "code": "AGENT_UNKNOWN", "expected": { "status": "error", "summary": "That agent is not a known teammate.", "next_actions": [], "artifacts": [], "error": { "code": "AGENT_UNKNOWN", "retry": "Discover only a known roster agent.", "stopCondition": "Do not synthesize a capability result for an unknown agent." } } },
+    { "id": "envelope-error-source-unreachable", "code": "SOURCE_UNREACHABLE", "expected": { "status": "error", "summary": "A capability check could not reach its source.", "next_actions": [], "artifacts": [], "error": { "code": "SOURCE_UNREACHABLE", "retry": "Retry once the source is reachable.", "stopCondition": "Do not report a capability the check could not reach." } } }
+  ]
+}

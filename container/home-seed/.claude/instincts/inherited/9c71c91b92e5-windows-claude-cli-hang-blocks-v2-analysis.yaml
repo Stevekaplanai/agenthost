@@ -1,0 +1,16 @@
+---
+id: 9c71c91b92e5-windows-claude-cli-hang-blocks-v2-analysis
+trigger: "When observer logs show many observations but zero instincts"
+confidence: 0.4
+domain: "debugging"
+source: "vault/03_Insights/Windows Claude CLI hang blocks v2 analysis.md"
+scope: global
+---
+
+# Windows Claude Cli Hang Blocks V2 Analysis
+
+## Action
+Check for 'Skipping claude analysis on Windows' logs indicating a non-interactive CLI hang.
+
+## Evidence
+Seeded from vault/03_Insights/Windows Claude CLI hang blocks v2 analysis.md via seed_instincts.py.

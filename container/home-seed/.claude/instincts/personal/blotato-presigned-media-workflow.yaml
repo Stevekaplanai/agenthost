@@ -1,0 +1,47 @@
+---
+id: blotato-presigned-media-workflow
+trigger: "when scheduling a Blotato post with a local media file"
+confidence: 0.9
+domain: "social-scheduling"
+source: "session-observation"
+scope: global
+created_at: "2026-05-03"
+last_observed_at: "2026-05-02"
+---
+
+# Blotato MCP requires public URLs — use the presigned-upload workflow
+
+## Action
+
+Three-step pattern for any local-file post:
+
+1. `mcp__claude_ai_Blotato__blotato_create_presigned_upload_url(filename: "x.png")` returns `{presignedUrl, publicUrl}`
+2. `curl -X PUT "<presignedUrl>" --data-binary "@/local/path/x.png"` (raw bytes, NOT multipart)
+3. Pass the `publicUrl` in `mediaUrls` of `blotato_create_post`
+
+For batch uploads, request all presigned URLs first (one MCP call per file), then run all curls in a single bash for-loop.
+
+## Platform quirks (verified 2026-05-02)
+
+- **Instagram Story** → must pass `mediaType: "story"`, otherwise treats as feed post
+- **LinkedIn personal** → omit `pageId`
+- **LinkedIn company page** → pass `pageId` from subaccount ID
+- **Twitter thread** → use `additionalPosts: [{text, mediaUrls?}]` array (~280 char per tweet)
+- **TikTok** → requires `privacyLevel` + 6 boolean flags
+- **YouTube** → requires `title` + `privacyStatus`
+- **scheduledTime** → ISO 8601 UTC (avoid `:00`/`:30` minutes — every Blotato user picks those)
+
+## What Blotato CAN'T do
+
+- LinkedIn document carousel (PDF format) — Blotato posts as multi-image, different reach profile
+- Reddit / Hacker News / Product Hunt — not Blotato platforms
+- Profile chrome (X header, LinkedIn banner image, IG bio) — post-level only
+
+## Evidence
+
+- 2026-05-02: 30 SAASpocolypse 2026 posts scheduled this way (May 3 → Jun 17). All 30 returned valid `postSubmissionId`. Workflow worked first-try after presigned URLs were obtained.
+
+## Related
+
+- Memory entry: `reference_blotato_mcp_post_workflow.md`
+- Reference implementation: `content-engine/saaspocolypse/POSTING-PLAN.md`

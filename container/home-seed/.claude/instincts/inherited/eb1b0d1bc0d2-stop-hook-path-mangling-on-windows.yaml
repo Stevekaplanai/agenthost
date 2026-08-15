@@ -1,0 +1,16 @@
+---
+id: eb1b0d1bc0d2-stop-hook-path-mangling-on-windows
+trigger: "When configuring file paths in JSON on Windows"
+confidence: 0.9
+domain: "debugging"
+source: "vault/03_Insights/Stop Hook Path Mangling on Windows.md"
+scope: global
+---
+
+# Stop Hook Path Mangling On Windows
+
+## Action
+Use forward slashes or escaped backslashes to prevent path mangling.
+
+## Evidence
+Seeded from vault/03_Insights/Stop Hook Path Mangling on Windows.md via seed_instincts.py.

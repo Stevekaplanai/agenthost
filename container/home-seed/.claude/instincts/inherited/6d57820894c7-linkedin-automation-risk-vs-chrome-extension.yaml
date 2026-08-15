@@ -1,0 +1,16 @@
+---
+id: 6d57820894c7-linkedin-automation-risk-vs-chrome-extension
+trigger: "When automating actions on platforms with aggressive bot detection"
+confidence: 0.8
+domain: "integration"
+source: "vault/03_Insights/LinkedIn automation risk vs. Chrome extension.md"
+scope: global
+---
+
+# Linkedin Automation Risk Vs. Chrome Extension
+
+## Action
+Build a browser extension that runs in the user's active session instead of using headless automation.
+
+## Evidence
+Seeded from vault/03_Insights/LinkedIn automation risk vs. Chrome extension.md via seed_instincts.py.

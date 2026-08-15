@@ -1,0 +1,8 @@
+#!/bin/sh
+# Dry-run-only fixture. Any attempted model turn fails closed.
+if [ "$1" = "--version" ]; then
+  printf '%s\n' 'kimi test-fixture 0'
+  exit 0
+fi
+printf '%s\n' 'test fixture must never run inference' >&2
+exit 70

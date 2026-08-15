@@ -1,0 +1,16 @@
+---
+id: 4d3788f790f1-pdl-query-dsl-quirks
+trigger: "receiving 400 or 404 errors from the PDL search endpoint"
+confidence: 0.4
+domain: "integration"
+source: "vault/03_Insights/PDL Query DSL Quirks.md"
+scope: global
+---
+
+# Pdl Query Dsl Quirks
+
+## Action
+Remove top-level minimum_should_match, use location.country, and handle 404s as empty results.
+
+## Evidence
+Seeded from vault/03_Insights/PDL Query DSL Quirks.md via seed_instincts.py.

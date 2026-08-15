@@ -1,0 +1,16 @@
+---
+id: 1c0636302ef6-empty-content-scheduler-guard
+trigger: "When scheduling periodic data-dependent notifications"
+confidence: 0.85
+domain: "integration"
+source: "vault/03_Insights/Empty Content Scheduler Guard.md"
+scope: global
+---
+
+# Empty Content Scheduler Guard
+
+## Action
+Skip the send if data is insufficient and do not advance the next-run timestamp.
+
+## Evidence
+Seeded from vault/03_Insights/Empty Content Scheduler Guard.md via seed_instincts.py.

@@ -1,0 +1,16 @@
+---
+id: 808c2546c461-vercel-build-orphan-imports
+trigger: "Vercel build fails with 'Module not found' but local build passes"
+confidence: 0.9
+domain: "debugging"
+source: "skills/learned/vercel-build-orphan-imports.md"
+scope: global
+---
+
+# Vercel Build Orphan Imports
+
+## Action
+Check if the imported file is untracked in git and either commit it or remove the orphan import.
+
+## Evidence
+Seeded from skills/learned/vercel-build-orphan-imports.md via seed_instincts.py.

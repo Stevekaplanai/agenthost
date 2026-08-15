@@ -1,0 +1,46 @@
+---
+id: playwright-bulk-prototype-renderer
+trigger: "when bulk-rendering React/HTML prototypes to PNG (banners, carousel slides, video overlays, design assets)"
+confidence: 0.85
+domain: "rendering"
+source: "session-observation"
+scope: global
+created_at: "2026-05-03"
+last_observed_at: "2026-05-02"
+---
+
+# The single-renderer-page + Playwright loop pattern
+
+## Action
+
+For bulk-export of design prototypes (claude.com/design bundles, custom React renderers, etc.) to PNG, use this pattern:
+
+1. **Single renderer HTML** that takes URL params (`?id=<x>` or `?section=<a>&artboard=<b>`), looks up the right component or section, and mounts it full-bleed at native dimensions on a clean stage. No DesignCanvas wrapper, no chrome.
+2. **Inline `node:http` server** in the Node script (Babel-standalone XHR is blocked by file://).
+3. **Playwright loop**: for each artboard ID, navigate, wait for `window.__renderReady === true`, set viewport to native dimensions, screenshot with `clip` at exact dims.
+4. **`deviceScaleFactor: 2`** in the browser context for retina-crisp text on social platforms.
+5. **Inventory map** in the Node script: id → `{folder, filename}` for organized output. Don't auto-derive filenames from labels — use a deterministic map per the posting plan.
+
+## Critical setup details
+
+- The HTML renderer needs a hidden `<div id="root">` if the bundle's `app.jsx` calls `createRoot('#root')` — otherwise it throws and never sets `window.SECTIONS`
+- For per-slide carousel rendering: extract slide arrays + render functions from the source JSX, expose them on `window` (`Object.assign(window, {SlideRenderer, slides})`), then navigate to `?mode=slide&video=a1&index=0`
+- Wait for `document.fonts.ready` before screenshotting if Google Fonts are loaded — saves rendering serif/sans fallback artifacts
+
+## Performance
+
+- ~1.5-2 sec per artboard at native resolution + 2× scale
+- 30-42 artboards = 60-90 sec total for a full bundle
+- Reuse Playwright install across project folders via `ln -s node_modules ../shared/node_modules` to avoid re-downloading Chromium (~150MB)
+
+## Evidence
+
+- 2026-05-02 SAASpocolypse: 30 banners rendered first-try after the file://→http:// fix.
+- 2026-05-02 GTMVP: 42 artboards rendered, then 33 carousel slides as a second pass via `?mode=slide` parameterization.
+- 2026-05-02 GTMVP: 2 corrected A3 overlays re-rendered surgically (single call per asset, ~10s total).
+
+## Reference implementations
+
+- `content-engine/saaspocolypse/design-system/_render/render-banners.mjs` (30 banners)
+- `content-engine/youtube/gtmvp/design-bundle/_render/render-gtmvp.mjs` (42 artboards)
+- `content-engine/youtube/gtmvp/design-bundle/_render/render-carousel-slides.mjs` (33 slides)

@@ -1,0 +1,16 @@
+---
+id: 4e0dc0f00fc1-reasoning-model-null-content
+trigger: "a reasoning model returns null content"
+confidence: 0.8
+domain: "integration"
+source: "vault/03_Insights/Reasoning Model Null Content.md"
+scope: global
+---
+
+# Reasoning Model Null Content
+
+## Action
+Fallback to the message.reasoning field.
+
+## Evidence
+Seeded from vault/03_Insights/Reasoning Model Null Content.md via seed_instincts.py.

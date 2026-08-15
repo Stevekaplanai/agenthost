@@ -1,0 +1,16 @@
+# Build context is container/. Keep only what the Dockerfile COPYs; everything
+# else (the staged fly.toml.deploy, stray files) just slows the upload.
+fly.toml
+fly.toml.deploy
+package.json
+*.md
+# ...except the docs the Dockerfile COPYs into the image (the box agents' standing
+# orders + the governance the charter points them at). Without these un-ignores, the
+# *.md rule above strips them from the build context and the COPY fails ("not found").
+!team-charter.md
+!CODEX-ENGINEERING-CHARTER.md
+!OPERATOR-CARDINAL-RULES.md
+!TEAM-PROCESS.md
+!RULE-CONSTITUTION.md
+!TRANSCENDENCE.md
+!OPERATING-PRINCIPLES.md

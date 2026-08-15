@@ -1,0 +1,29 @@
+node_modules/
+dist/
+!container/dashboard-ui/_next/static/chunks/next/dist/
+!container/dashboard-ui/_next/static/chunks/next/dist/**
+out/
+.font-build/
+*.tar.gz
+*.tgz
+.env
+.env.*
+fly.toml.deploy
+staging/
+manifest.json
+compat-report.md
+Dockerfile.deploy
+.vercel/
+*.local.txt
+test/.gate*/
+site-legal/.gitignore
+site/promo.mp4
+*.mp4
+
+# gate-continuity test scratch dirs
+test/.gatecont-*/
+
+# kimi-review.sh writes its prompt+diff brief here; it must live in the repo
+# because the kimi binary cannot read MSYS /tmp paths. Always removed by the
+# script trap, ignored so a crash never leaves it stageable.
+.kimi-review-*.md

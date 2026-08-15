@@ -1,0 +1,16 @@
+---
+id: 7659bb029bc6-vercel-cron-job-authorization-issue
+trigger: "When a manual Vercel cron job trigger returns a 401 Unauthorized error"
+confidence: 0.8
+domain: "debugging"
+source: "vault/03_Insights/Vercel Cron Job Authorization Issue.md"
+scope: global
+---
+
+# Vercel Cron Job Authorization Issue
+
+## Action
+Verify the CRON_SECRET is correctly set in the local environment variables.
+
+## Evidence
+Seeded from vault/03_Insights/Vercel Cron Job Authorization Issue.md via seed_instincts.py.

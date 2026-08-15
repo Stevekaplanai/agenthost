@@ -1,0 +1,16 @@
+---
+id: 850730cfa37f-vercel-sensitive-env-vars-cant-be-read-back
+trigger: "When verifying the presence of a sensitive environment variable"
+confidence: 0.8
+domain: "security"
+source: "vault/03_Insights/Vercel sensitive env vars cant be read back.md"
+scope: global
+---
+
+# Vercel Sensitive Env Vars Cant Be Read Back
+
+## Action
+Build a health-probe endpoint that returns a boolean status instead of the actual value.
+
+## Evidence
+Seeded from vault/03_Insights/Vercel sensitive env vars cant be read back.md via seed_instincts.py.

@@ -1,0 +1,16 @@
+---
+id: ff3fc6c82680-agent-worktree-isolation
+trigger: "When running parallel agents that modify the same repository"
+confidence: 0.8
+domain: "infra"
+source: "vault/03_Insights/Agent Worktree Isolation.md"
+scope: global
+---
+
+# Agent Worktree Isolation
+
+## Action
+Configure the agents with worktree isolation.
+
+## Evidence
+Seeded from vault/03_Insights/Agent Worktree Isolation.md via seed_instincts.py.

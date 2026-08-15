@@ -1,0 +1,97 @@
+{
+  "_comment": "AgentHost starter stack -- the curated set of skills every box boots with. start.sh merges the plugin entries below into ~/.claude/settings.json on first boot (a user's own same-named entry always wins). The `skills` CLI reads this file to show the inventory. Sources verified real 2026-07-18; several are proven working in the AgentHost dev harness. `plugins` install via settings.json (extraKnownMarketplaces + enabledPlugins). `mcp` entries install their own way (a setup command) and are flagged. `setup` names what a user must still do for a skill to fully work; null = works out of the box.",
+  "version": 1,
+  "plugins": [
+    {
+      "id": "superpowers@superpowers-marketplace",
+      "marketplace": "superpowers-marketplace",
+      "repo": "obra/superpowers-marketplace",
+      "name": "Superpowers",
+      "category": "developer",
+      "blurb": "Disciplined planning, TDD, systematic debugging, code review, and verification-before-done skills.",
+      "setup": null
+    },
+    {
+      "id": "agentmemory@agentmemory",
+      "marketplace": "agentmemory",
+      "repo": "rohitg00/agentmemory",
+      "name": "AgentMemory",
+      "category": "developer",
+      "blurb": "Persistent memory that carries decisions and project state across every model you use.",
+      "setup": null
+    },
+    {
+      "id": "claude-ads@ai-marketing-hub-claude-ads",
+      "marketplace": "ai-marketing-hub-claude-ads",
+      "repo": "AgriciDaniel/claude-ads",
+      "name": "Claude Ads",
+      "category": "marketing",
+      "blurb": "Paid-media operations across 12 ad platforms: audits, plans, creative, brand DNA, PPC math.",
+      "setup": null
+    },
+    {
+      "id": "claude-seo@agricidaniel-claude-seo",
+      "marketplace": "agricidaniel-claude-seo",
+      "repo": "AgriciDaniel/claude-seo",
+      "name": "Claude SEO",
+      "category": "marketing",
+      "blurb": "Technical SEO, E-E-A-T, schema, GEO/AEO, backlinks, local + international SEO.",
+      "setup": null
+    },
+    {
+      "id": "claude-blog@agricidaniel-blog",
+      "marketplace": "agricidaniel-blog",
+      "repo": "AgriciDaniel/claude-blog",
+      "name": "Claude Blog",
+      "category": "marketing",
+      "blurb": "SEO- and AI-citation-optimized blog writing with a structured delivery contract.",
+      "setup": null
+    },
+    {
+      "id": "marketing-skills@marketingskills",
+      "marketplace": "marketingskills",
+      "repo": "coreyhaines31/marketingskills",
+      "name": "Marketing Skills",
+      "category": "marketing",
+      "blurb": "60 skills for technical founders: CRO, copywriting, cold email, pricing, launches, PR, positioning.",
+      "setup": null
+    }
+  ],
+  "skills": [
+    {
+      "dir": "newsjacking",
+      "repo": "Stevekaplanai/newsjacking-skill",
+      "name": "Newsjacking",
+      "category": "marketing",
+      "blurb": "Monitor trends in real time, score brand-relevant opportunities, generate rapid-response content.",
+      "setup": null
+    },
+    {
+      "dir": "pitch-deck-mastery",
+      "repo": "Stevekaplanai/pitch-deck-mastery-skill",
+      "name": "Pitch Deck Mastery",
+      "category": "marketing",
+      "blurb": "Investor-grade pitch decks from 10 curated startup resources and proven deck structures.",
+      "setup": null
+    }
+  ],
+  "mcp": [
+    {
+      "id": "codegraph",
+      "name": "CodeGraph",
+      "category": "developer",
+      "repo": "colbymchenry/codegraph",
+      "install": "curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh",
+      "blurb": "A local code knowledge graph so agents waste less context rereading the same files.",
+      "setup": "run `codegraph init` inside a repo to index it"
+    }
+  ],
+  "keyGated": [
+    {
+      "name": "Higgsfield",
+      "category": "media",
+      "blurb": "Image + video generation (HyperFrames-adjacent). Ships enabled on this box.",
+      "setup": "add your Higgsfield API key to use it (image/video generation is a paid service)"
+    }
+  ]
+}

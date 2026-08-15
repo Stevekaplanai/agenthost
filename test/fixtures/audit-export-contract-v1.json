@@ -1,0 +1,89 @@
+{
+  "$schema": "agenthost-continuity-audit-export-fixtures-v1",
+  "contractId": "CONT-10",
+  "contractVersion": 1,
+  "seededSecret": "ah-test-export-secret-DO-NOT-LOG",
+  "exportSchemaVersion": 1,
+  "exportFormats": ["json", "pdf"],
+  "jsonSections": ["schemaVersion", "runs", "spend", "approvals", "gateEvents", "boardSnapshots", "artifacts", "coverage", "generatedAt"],
+  "pdfSections": ["summaryHeader", "runs", "spend", "approvals", "gateEvents", "boardSnapshots", "artifacts", "retentionDisclosure"],
+  "errorCodes": ["EXPORT_RANGE_INVALID", "EXPORT_TOO_LARGE", "SOURCE_UNAVAILABLE", "EXPORT_FORMAT_UNSUPPORTED"],
+  "sources": ["runs", "auditLog", "chains", "board"],
+  "sourceRetention": {
+    "runs": { "days": 30, "minimumTerminalRuns": 1000, "configurable": true },
+    "auditLog": { "rotateBytes": 1048576, "predecessorsKept": 1, "gapExtent": "unknown-unbounded" }
+  },
+  "limits": { "maxSpanDays": 366, "maxRecordsPerExport": 50000, "pdfRowsPerPage": 40 },
+  "orderingCases": [
+    {
+      "id": "stable-ts-then-id-codepoint-order",
+      "inputRecords": [
+        { "id": "run_b", "createdAt": 200 },
+        { "id": "run_a", "createdAt": 100 },
+        { "id": "run_d", "createdAt": 150 },
+        { "id": "run_c", "createdAt": 150 }
+      ],
+      "expected": { "orderedIds": ["run_a", "run_c", "run_d", "run_b"], "usesLocaleCompare": false, "ordersByCreatedAtNotUpdatedAt": true },
+      "note": "sort by immutable createdAt, tie (150) broken by id codepoint (run_c < run_d), never localeCompare"
+    }
+  ],
+  "secretCases": [
+    { "id": "box-secret-in-run-summary-scrubbed", "sourceField": "runs[].summary", "injectValueIsSeededSecret": true, "secretClass": "box-value", "expected": { "exportContainsSecret": false } },
+    { "id": "box-secret-in-audit-detail-scrubbed", "sourceField": "auditLog[].detail", "injectValueIsSeededSecret": true, "secretClass": "box-value", "auditRedactedAtWrite": false, "expected": { "exportContainsSecret": false }, "note": "audit() does not redact at write; the export must scrub it" },
+    { "id": "raw-prompt-never-exported", "sourceField": "prompt", "expected": { "presentInExport": false } },
+    { "id": "full-agent-output-never-exported", "sourceField": "fullOutput", "expected": { "presentInExport": false } },
+    { "id": "third-party-shape-scrubbed", "sourceField": "boardSnapshots[].title", "injectValue": "AKIAIOSFODNN7EXAMPLE", "secretClass": "third-party-shape", "expected": { "exportContainsValue": false }, "note": "shape-based scrubber catches AWS-shaped keys that are not box values" },
+    { "id": "third-party-unknown-shape-best-effort-disclosed", "sourceField": "gateEvents[].detail", "injectValue": "unknown-opaque-blob-xyz", "secretClass": "third-party-unknown-shape", "expected": { "guaranteedScrubbed": false, "bestEffortDisclosed": true }, "note": "residual risk is disclosed, not hidden -- export is never sold as zero-leak" }
+  ],
+  "retentionCases": [
+    { "id": "audit-rotation-gap-extent-unknown", "source": "auditLog", "earliestReadableTs": 1784600000000, "rotationsPastPredecessor": 5, "expected": { "coverageWindowDisclosed": true, "earliestReadableTsSurfaced": 1784600000000, "gapExtent": "unknown-unbounded", "impliesBoundedGap": false }, "note": "destructive rename overwrote an unknown span; never frame as a bounded window" },
+    { "id": "runs-at-configured-retention-boundary", "source": "runs", "runsRetained": 1000, "olderPruned": 42, "readsConfiguredValues": true, "expected": { "coverageWindowDisclosed": true, "prunedCountDisclosed": 42, "prunedCountIsLossyLowerBound": true, "impliesComplete": false } },
+    { "id": "both-sources-gapped-disclosed-independently", "runsPruned": true, "auditRotated": true, "expected": { "runsGapDisclosed": true, "auditGapDisclosed": true, "collapsedIntoOneGlobalFlag": false }, "note": "per-source disclosure must not collapse into a single global gap" },
+    { "id": "no-gap-discloses-complete-window", "source": "auditLog", "rotationsPastPredecessor": 0, "expected": { "coverageWindowDisclosed": true, "gapExtent": "none" } }
+  ],
+  "contentCases": [
+    { "id": "active-run-running-exported-as-active", "run": { "status": "running" }, "expected": { "exportedStatus": "running", "coercedToTerminal": false } },
+    { "id": "active-run-gated-exported-as-active", "run": { "status": "gated" }, "expected": { "exportedStatus": "gated", "coercedToTerminal": false } },
+    { "id": "terminality-read-from-status-not-finishedAt", "run": { "status": "queued", "finishedAt": null }, "expected": { "treatedTerminal": false }, "note": "skipped/interrupted are terminal with finishedAt set; queued is not -- read status, not finishedAt" },
+    { "id": "unicode-content-preserved", "field": "summary", "value": "café — 部署 — ✅", "expected": { "roundTrips": "café — 部署 — ✅" } },
+    { "id": "referenced-but-unresolved-artifact-disclosed-not-pruned", "artifactRef": "run_gone", "resolvable": false, "expected": { "labeled": "unresolved", "assertedPruned": false, "fabricated": false }, "note": "no tombstone exists; cannot claim pruned vs never-existed" }
+  ],
+  "consistencyCases": [
+    { "id": "concurrent-write-frozen-snapshot-counts-pinned", "writeDuringExport": true, "snapshotRunCount": 7, "expected": { "usesFrozenSnapshot": true, "jsonRunCount": 7, "pdfRunCount": 7 }, "note": "JSON and PDF agree on the frozen count; the racing write is excluded from both" },
+    { "id": "audit-file-rotation-during-read-captured-atomically", "rotationDuringRead": true, "expected": { "capturesBothFilesInOneStep": true, "doubleCounts": false, "dropsWindow": false } },
+    { "id": "deterministic-json-byte-identical-for-injected-snapshot", "sameInjectedSnapshot": true, "generatedAtInjected": 1784650000000, "expected": { "byteIdentical": true, "generatedAtVerbatim": 1784650000000 } },
+    { "id": "counts-reconcile-after-range-filter", "source": { "runs": 10, "approvals": 5, "gateEvents": 8, "boardSnapshots": 3, "artifacts": 6 }, "inRange": { "runs": 7, "approvals": 3, "gateEvents": 8, "boardSnapshots": 2, "artifacts": 6 }, "expected": { "jsonSectionLengths": { "runs": 7, "approvals": 3, "gateEvents": 8, "boardSnapshots": 2, "artifacts": 6 }, "reconcilesToSnapshotNotRawSource": true } },
+    { "id": "empty-history-exports-valid-empty-sections", "source": { "runs": 0, "approvals": 0 }, "expected": { "jsonSectionLengths": { "runs": 0, "approvals": 0 }, "coveragePresent": true, "envelopeStatus": "success" } },
+    { "id": "prior-export-artifact-in-range-does-not-perturb-rerun", "priorExportRunInRange": { "kind": "system", "artifactType": "export" }, "expected": { "rerunByteIdentical": true, "priorExportExcludedFromProjection": true, "noAppendToAuditLog": true }, "note": "export N+1 excludes export N's own bookkeeping and never reads its own audit entry" }
+  ],
+  "spendCases": [
+    { "id": "spend-integer-minor-units-breakdowns-reconcile", "perEngineMinorUnits": { "claude": 10, "codex": 20, "gemini": 5 }, "perChainMinorUnits": { "chain_1": 25, "chain_2": 10 }, "perDayMinorUnits": { "2026-07-22": 35 }, "expected": { "totalMinorUnits": 35, "allBreakdownsSumToTotal": true, "usesFloatDollars": false }, "note": "0.10+0.20+0.05 as ints (10+20+5=35) avoids float drift; three breakdowns agree" }
+  ],
+  "sizeCases": [
+    { "id": "large-history-paginates-not-fails", "sourceRunCount": 100000, "maxRecordsPerExport": 50000, "expected": { "bounded": true, "fails": false, "pageCount": 2 } },
+    { "id": "span-at-max-accepted", "requestedSpanDays": 366, "maxSpanDays": 366, "expected": { "accepted": true } },
+    { "id": "span-over-max-rejected", "requestedSpanDays": 367, "maxSpanDays": 366, "expected": { "errorCode": "EXPORT_TOO_LARGE" } }
+  ],
+  "requestCases": [
+    { "id": "inverted-range-rejected", "from": 2000, "to": 1000, "expected": { "errorCode": "EXPORT_RANGE_INVALID" } },
+    { "id": "unsupported-format-rejected", "format": "docx", "expected": { "errorCode": "EXPORT_FORMAT_UNSUPPORTED" } },
+    { "id": "source-unreadable-audit-fails-closed", "unreadableSource": "auditLog", "expected": { "errorCode": "SOURCE_UNAVAILABLE" } },
+    { "id": "source-unreadable-runs-fails-closed", "unreadableSource": "runs", "expected": { "errorCode": "SOURCE_UNAVAILABLE" } },
+    { "id": "source-unreadable-board-fails-closed", "unreadableSource": "board", "expected": { "errorCode": "SOURCE_UNAVAILABLE" } }
+  ],
+  "pdfCases": [
+    { "id": "pdf-has-all-required-sections", "expected": { "sections": ["summaryHeader", "runs", "spend", "approvals", "gateEvents", "boardSnapshots", "artifacts", "retentionDisclosure"], "retentionProminent": true } },
+    { "id": "pdf-unicode-renders", "value": "café — 部署 — ✅", "expected": { "renders": true } },
+    { "id": "pdf-download-flow-390px", "viewportPx": 390, "expected": { "downloadStarts": true, "downloadCompletes": true } }
+  ],
+  "exportArtifactCases": [
+    { "id": "export-recorded-as-system-run-with-export-artifact", "expected": { "runKind": "system", "artifactType": "export", "usesNonexistentExportKind": false, "count": 1, "createsSecondAuditStore": false, "observabilityWritesToAuditLog": false } }
+  ],
+  "envelopeCases": [
+    { "id": "envelope-success-export", "code": null, "expected": { "status": "success", "summary": "Exported 7 runs and 3 approvals as JSON and PDF.", "next_actions": [], "artifacts": [{ "type": "export", "format": "json" }, { "type": "export", "format": "pdf" }] } },
+    { "id": "envelope-error-range", "code": "EXPORT_RANGE_INVALID", "expected": { "status": "error", "summary": "That export range is invalid.", "next_actions": [], "artifacts": [], "error": { "code": "EXPORT_RANGE_INVALID", "retry": "Provide a start earlier than the end, then export again.", "stopCondition": "Do not export with an inverted or malformed range." } } },
+    { "id": "envelope-error-too-large", "code": "EXPORT_TOO_LARGE", "expected": { "status": "error", "summary": "That range is too large to export in one file.", "next_actions": [], "artifacts": [], "error": { "code": "EXPORT_TOO_LARGE", "retry": "Narrow the date range and export in parts.", "stopCondition": "Do not attempt an unbounded export." } } },
+    { "id": "envelope-error-source-unavailable", "code": "SOURCE_UNAVAILABLE", "expected": { "status": "error", "summary": "A required evidence source could not be read.", "next_actions": [], "artifacts": [], "error": { "code": "SOURCE_UNAVAILABLE", "retry": "Retry once the ledger, audit log, chains, and board are all readable.", "stopCondition": "Do not emit a partial export that omits an unreadable source silently." } } },
+    { "id": "envelope-error-format-unsupported", "code": "EXPORT_FORMAT_UNSUPPORTED", "expected": { "status": "error", "summary": "Only JSON and PDF exports are supported.", "next_actions": [], "artifacts": [], "error": { "code": "EXPORT_FORMAT_UNSUPPORTED", "retry": "Request json or pdf.", "stopCondition": "Do not attempt an unsupported export format." } } }
+  ]
+}

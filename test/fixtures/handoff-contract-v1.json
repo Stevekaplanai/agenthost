@@ -1,0 +1,175 @@
+{
+  "$schema": "agenthost-continuity-handoff-fixtures-v1",
+  "contractId": "CONT-08",
+  "contractVersion": 1,
+  "seededSecret": "ah-test-handoff-secret-DO-NOT-LOG",
+  "knownAgents": ["claude", "codex", "gemini", "hermes", "kimi"],
+  "expectedOutputEnum": ["unified-diff", "review-verdict", "report", "artifact-set", "chat-reply"],
+  "reviewRequirementEnum": ["none", "cross-engine", "security"],
+  "capabilityEnum": ["chat", "review", "terminal", "unattended", "gitMaxRung:<n>"],
+  "terminalStates": ["completed", "rejected", "expired", "cancelled"],
+  "serverMintedFields": ["id", "runId", "chainId", "parentHandoffId", "reissuedFrom", "createdAt", "expiresAt", "acceptedBy", "acceptedAt", "acceptanceToken", "effectKey"],
+  "derivedCapabilityMap": {
+    "chat-reply": "chat",
+    "report": "chat",
+    "review-verdict": "review"
+  },
+  "reviewedOutputDerivedCapabilityMap": {
+    "unified-diff": "terminal",
+    "artifact-set": "terminal"
+  },
+  "autonomousOutputDerivedCapabilityMap": {
+    "unified-diff": "unattended",
+    "artifact-set": "unattended"
+  },
+  "reviewedVsAutonomousNote": "terminal is not an autonomous-execution licence (CONT-06 reconciliation): unified-diff/artifact-set derive 'terminal' only when a human turn will review before landing (autonomous:false); when the target applies/commits/merges with no returning human turn (autonomous:true), the derived capability is 'unattended' so the authorized rung is never bypassed for autonomous work.",
+  "limits": {
+    "contextSummaryMaxChars": 4000,
+    "artifactsMax": 32,
+    "expiryWindowMaxSeconds": 86400,
+    "reissueMaxPerChain": 3
+  },
+  "creationCases": [
+    {
+      "id": "create-valid-review-handoff",
+      "accepted": true,
+      "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "contextSummary": "Drafted the handoff contract; needs cross-engine review.", "artifacts": [{ "type": "file", "path": "docs/continuity/HANDOFF-CONTRACT.md", "revision": "aaaaaaa" }], "expectedOutput": "review-verdict", "reviewRequirement": "cross-engine", "expiryWindowSeconds": 3600 },
+      "expected": { "state": "pending", "derivedCapability": "review", "acceptedBy": null, "acceptanceToken": null, "effectKey": null }
+    },
+    {
+      "id": "create-valid-diff-handoff-human-reviewed",
+      "accepted": true,
+      "request": { "taskId": "CONT-05", "source": "codex", "target": "claude", "contextSummary": "Channel backend landed; hand the mobile surface to Claude for a human-reviewed PR.", "artifacts": [{ "type": "file", "path": "container/gate.js", "revision": "093dca4" }], "expectedOutput": "unified-diff", "autonomous": false, "reviewRequirement": "none", "expiryWindowSeconds": 7200 },
+      "expected": { "state": "pending", "derivedCapability": "terminal", "acceptedBy": null, "acceptanceToken": null, "effectKey": null }
+    },
+    {
+      "id": "create-valid-diff-handoff-autonomous-needs-unattended",
+      "accepted": true,
+      "request": { "taskId": "CONT-05", "source": "codex", "target": "hermes", "contextSummary": "Autonomously apply and commit this diff with no returning human turn.", "artifacts": [{ "type": "file", "path": "container/gate.js", "revision": "093dca4" }], "expectedOutput": "unified-diff", "autonomous": true, "reviewRequirement": "none", "expiryWindowSeconds": 7200 },
+      "expected": { "state": "pending", "derivedCapability": "unattended", "acceptedBy": null, "acceptanceToken": null, "effectKey": null },
+      "note": "CONT-06 reconciliation: autonomous execution requires unattended, not merely terminal, or the authorized rung is bypassed"
+    },
+    {
+      "id": "create-valid-report-handoff-atmax-expiry",
+      "accepted": true,
+      "request": { "taskId": "CONT-10", "source": "claude", "target": "gemini", "contextSummary": "Summarize the audit window for export.", "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 86400 },
+      "expected": { "state": "pending", "derivedCapability": "chat", "acceptedBy": null, "acceptanceToken": null, "effectKey": null }
+    },
+    {
+      "id": "create-valid-artifactset-handoff",
+      "accepted": true,
+      "request": { "taskId": "CONT-11", "source": "codex", "target": "gemini", "contextSummary": "Produce the voice sample set for human pickup.", "expectedOutput": "artifact-set", "autonomous": false, "reviewRequirement": "none", "expiryWindowSeconds": 1800 },
+      "expected": { "state": "pending", "derivedCapability": "terminal" }
+    },
+    {
+      "id": "create-valid-chatreply-handoff",
+      "accepted": true,
+      "request": { "taskId": "CONT-04", "source": "claude", "target": "gemini", "contextSummary": "Answer the operator question in the inbox thread.", "expectedOutput": "chat-reply", "reviewRequirement": "none", "expiryWindowSeconds": 600 },
+      "expected": { "state": "pending", "derivedCapability": "chat" }
+    },
+    { "id": "reject-server-minted-id-supplied", "accepted": false, "request": { "id": "ho_attacker", "taskId": "CONT-08", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "server-minted" },
+    { "id": "reject-server-minted-runid-supplied", "accepted": false, "request": { "runId": "run_victim", "taskId": "CONT-08", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "server-minted" },
+    { "id": "reject-server-minted-chainid-supplied", "accepted": false, "request": { "chainId": "chain_victim", "taskId": "CONT-08", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "server-minted" },
+    { "id": "reject-server-minted-token-supplied", "accepted": false, "request": { "acceptanceToken": "tok_attacker", "taskId": "CONT-08", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "server-minted" },
+    { "id": "reject-server-minted-createdat-supplied", "accepted": false, "request": { "createdAt": "2020-01-01T00:00:00Z", "taskId": "CONT-08", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "server-minted" },
+    { "id": "reject-unknown-source-agent", "accepted": false, "request": { "taskId": "CONT-08", "source": "openclaw", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "UNKNOWN_AGENT", "errorContains": "roster" },
+    { "id": "reject-unknown-target-agent", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "ollama", "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "UNKNOWN_AGENT", "errorContains": "roster" },
+    { "id": "reject-unknown-expected-output", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "expectedOutput": "shell-access", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "expectedOutput" },
+    { "id": "reject-freetext-taskid", "accepted": false, "request": { "taskId": "please just fix the thing", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "taskId" },
+    { "id": "reject-missing-required-field", "accepted": false, "request": { "taskId": "CONT-08", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "source" },
+    { "id": "reject-capability-hint-weaker-than-derived", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "expectedOutput": "review-verdict", "capabilityHint": "chat", "reviewRequirement": "cross-engine", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "capability" },
+    { "id": "reject-out-of-enum-capability-hint", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "expectedOutput": "report", "capabilityHint": "root", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "capability" },
+    { "id": "reject-out-of-enum-review-requirement", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "rubber-stamp", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "reviewRequirement" },
+    { "id": "reject-context-too-large", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "contextSummaryLength": 4001, "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "CONTEXT_TOO_LARGE", "errorContains": "summary" },
+    { "id": "reject-too-many-artifacts", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "artifactCount": 33, "expectedOutput": "artifact-set", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "artifact" },
+    { "id": "reject-nonpositive-expiry-window", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 0 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "expiry" },
+    { "id": "reject-expiry-window-too-long", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "expiryWindowSeconds": 86401 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "expiry" },
+    { "id": "reject-self-review-same-agent-crossengine", "accepted": false, "request": { "taskId": "CONT-08", "source": "codex", "target": "codex", "expectedOutput": "review-verdict", "reviewRequirement": "cross-engine", "expiryWindowSeconds": 600 }, "errorCode": "SELF_REVIEW_FORBIDDEN", "errorContains": "review" },
+    { "id": "reject-self-review-same-agent-none", "accepted": false, "request": { "taskId": "CONT-08", "source": "codex", "target": "codex", "expectedOutput": "review-verdict", "reviewRequirement": "none", "expiryWindowSeconds": 600 }, "errorCode": "SELF_REVIEW_FORBIDDEN", "errorContains": "review", "note": "reviewRequirement:none must not smuggle a self-review of review-shaped work" },
+    { "id": "reject-self-review-security", "accepted": false, "request": { "taskId": "CONT-08", "source": "codex", "target": "codex", "expectedOutput": "review-verdict", "reviewRequirement": "security", "expiryWindowSeconds": 600 }, "errorCode": "SELF_REVIEW_FORBIDDEN", "errorContains": "review" },
+    { "id": "reject-self-review-resolved-authorship", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "artifacts": [{ "type": "file", "path": "container/providers-lib.js", "revision": "093dca4" }], "expectedOutput": "review-verdict", "reviewRequirement": "cross-engine", "expiryWindowSeconds": 600 }, "ledgerAuthorOfArtifact": "codex", "errorCode": "SELF_REVIEW_FORBIDDEN", "errorContains": "author", "note": "authorship resolved server-side from ledger; target==resolved author" },
+    { "id": "reject-self-review-unresolvable-authorship-failsclosed", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "artifacts": [{ "type": "file", "path": "container/providers-lib.js", "revision": "093dca4" }], "expectedOutput": "review-verdict", "reviewRequirement": "cross-engine", "expiryWindowSeconds": 600 }, "ledgerAuthorOfArtifact": null, "authorshipResolvable": false, "errorCode": "SELF_REVIEW_FORBIDDEN", "errorContains": "author", "note": "ledger BLOCKED / authorship unresolvable -> fails closed to SELF_REVIEW_FORBIDDEN, never accepts on unknown authorship" },
+    { "id": "reject-budget-reservation-over-standing", "accepted": false, "request": { "taskId": "CONT-07", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "budgetReservation": { "maxCostUsd": 50.0 }, "expiryWindowSeconds": 600 }, "targetStandingBudgetUsd": 5.0, "errorCode": "BUDGET_RESERVATION_INVALID", "errorContains": "budget" },
+    { "id": "reject-budget-reservation-over-effective-cap", "accepted": false, "request": { "taskId": "CONT-07", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "budgetReservation": { "maxCostUsd": 0.8 }, "expiryWindowSeconds": 600 }, "targetStandingBudgetUsd": 5.0, "targetPerTaskCapUsd": 0.2, "errorCode": "BUDGET_RESERVATION_INVALID", "errorContains": "budget", "note": "0.8 <= standing 5.0 but > effective per-task cap 0.2" },
+    { "id": "reject-budget-reservation-over-held-total", "accepted": false, "request": { "taskId": "CONT-07", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "budgetReservation": { "maxCostUsd": 0.8 }, "expiryWindowSeconds": 600 }, "targetStandingBudgetUsd": 1.0, "alreadyHeldUsd": 0.8, "errorCode": "BUDGET_RESERVATION_INVALID", "errorContains": "budget", "note": "each <= 1.0 but concurrent hold 0.8+0.8 > 1.0" },
+    { "id": "reject-budget-reservation-over-token-cap", "accepted": false, "request": { "taskId": "CONT-07", "source": "claude", "target": "codex", "expectedOutput": "report", "reviewRequirement": "none", "budgetReservation": { "maxTokens": 5000000 }, "expiryWindowSeconds": 600 }, "targetStandingTokens": 1200000, "errorCode": "BUDGET_RESERVATION_INVALID", "errorContains": "budget" },
+    { "id": "reject-artifact-path-traversal", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "artifacts": [{ "type": "file", "path": "../../../home/user/.claude/.credentials.json", "revision": "093dca4" }], "expectedOutput": "review-verdict", "reviewRequirement": "cross-engine", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "path" },
+    { "id": "reject-artifact-absolute-path", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "artifacts": [{ "type": "file", "path": "/etc/passwd", "revision": "093dca4" }], "expectedOutput": "review-verdict", "reviewRequirement": "cross-engine", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "path" },
+    { "id": "reject-artifact-symlink-escape", "accepted": false, "request": { "taskId": "CONT-08", "source": "claude", "target": "codex", "artifacts": [{ "type": "file", "path": "container/evil-link", "revision": "093dca4" }], "symlinkEscapes": true, "expectedOutput": "review-verdict", "reviewRequirement": "cross-engine", "expiryWindowSeconds": 600 }, "errorCode": "HANDOFF_REQUEST_INVALID", "errorContains": "path" }
+  ],
+  "derivedCapabilityCases": [
+    { "id": "derive-review", "expectedOutput": "review-verdict", "expectedCapability": "review" },
+    { "id": "derive-terminal-diff-reviewed", "expectedOutput": "unified-diff", "autonomous": false, "expectedCapability": "terminal" },
+    { "id": "derive-terminal-artifactset-reviewed", "expectedOutput": "artifact-set", "autonomous": false, "expectedCapability": "terminal" },
+    { "id": "derive-unattended-diff-autonomous", "expectedOutput": "unified-diff", "autonomous": true, "expectedCapability": "unattended" },
+    { "id": "derive-unattended-artifactset-autonomous", "expectedOutput": "artifact-set", "autonomous": true, "expectedCapability": "unattended" },
+    { "id": "derive-chat-report", "expectedOutput": "report", "expectedCapability": "chat" },
+    { "id": "derive-chat-reply", "expectedOutput": "chat-reply", "expectedCapability": "chat" }
+  ],
+  "acceptanceCases": [
+    { "id": "accept-once-success", "handoff": { "target": "codex", "derivedCapability": "review", "state": "pending" }, "callerIdentity": "codex", "targetCapabilityAvailable": true, "expected": { "accepted": true, "state": "accepted", "mintsToken": true, "recordsEffectKeyBeforeEffect": true, "duplicate": false } },
+    { "id": "accept-by-non-target-blocked", "handoff": { "target": "codex", "derivedCapability": "review", "state": "pending" }, "callerIdentity": "claude", "targetCapabilityAvailable": true, "expected": { "accepted": false, "errorCode": "ACCEPTOR_NOT_TARGET", "mintsToken": false }, "note": "confused deputy: only the authenticated target may accept" },
+    { "id": "accept-duplicate-blocked", "handoff": { "target": "codex", "derivedCapability": "review", "state": "accepted", "acceptanceToken": "tok_existing" }, "callerIdentity": "codex", "targetCapabilityAvailable": true, "attempt": 2, "expected": { "accepted": false, "errorCode": "DUPLICATE_ACCEPTANCE", "mintsToken": false } },
+    { "id": "accept-restart-idempotent-replay", "handoff": { "target": "codex", "derivedCapability": "review", "state": "accepted", "acceptanceToken": "tok_existing" }, "callerIdentity": "codex", "targetCapabilityAvailable": true, "replayOfSameAccept": true, "expected": { "accepted": true, "state": "accepted", "mintsToken": false, "returnsSameToken": "tok_existing" } },
+    { "id": "effect-idempotent-after-crash", "handoff": { "target": "codex", "derivedCapability": "terminal", "state": "accepted", "acceptanceToken": "tok_existing", "effectKey": "eff_existing" }, "crashBetweenEffectAndCompletion": true, "expected": { "reEmitsEffect": false, "returnsRecordedResult": true, "usesEffectKey": "eff_existing" }, "note": "single-acceptance protects accept; effectKey protects the effect" },
+    { "id": "accept-after-expiry-blocked", "handoff": { "target": "codex", "derivedCapability": "review", "state": "pending" }, "callerIdentity": "codex", "targetCapabilityAvailable": true, "nowAfterAcceptDeadline": true, "expected": { "accepted": false, "errorCode": "HANDOFF_EXPIRED", "mintsToken": false, "state": "expired" } },
+    { "id": "accept-target-unavailable-blocked", "handoff": { "target": "codex", "derivedCapability": "review", "state": "pending" }, "callerIdentity": "codex", "targetOnline": false, "expected": { "accepted": false, "errorCode": "TARGET_UNAVAILABLE", "mintsToken": false } },
+    { "id": "accept-capability-lost-after-creation-blocked", "handoff": { "target": "codex", "derivedCapability": "unattended", "state": "pending", "capabilityAtCreation": "available" }, "callerIdentity": "codex", "targetCapabilityAvailable": false, "expected": { "accepted": false, "errorCode": "CAPABILITY_UNAVAILABLE", "mintsToken": false } },
+    { "id": "capability-revoked-at-effect-blocked", "handoff": { "target": "codex", "derivedCapability": "unattended", "state": "accepted", "acceptanceToken": "tok_existing" }, "callerIdentity": "codex", "capabilityAtAcceptance": true, "capabilityAtEffect": false, "expected": { "effectEmitted": false, "errorCode": "CAPABILITY_UNAVAILABLE", "state": "blocked" }, "note": "TOCTOU: re-check derived capability at effect emission, not only acceptance" },
+    { "id": "accept-gitrung-level-sufficient", "handoff": { "target": "codex", "derivedCapability": "gitMaxRung:2", "state": "pending" }, "callerIdentity": "codex", "targetProfileGitRung": { "state": "available", "value": 3 }, "expected": { "accepted": true, "state": "accepted" } },
+    { "id": "accept-gitrung-level-insufficient-blocked", "handoff": { "target": "codex", "derivedCapability": "gitMaxRung:5", "state": "pending" }, "callerIdentity": "codex", "targetProfileGitRung": { "state": "available", "value": 2 }, "expected": { "accepted": false, "errorCode": "CAPABILITY_UNAVAILABLE", "mintsToken": false }, "note": "boolean has-gitMaxRung is insufficient; require value >= n" },
+    { "id": "accept-kimi-review-unavailable-from-profile", "handoff": { "target": "kimi", "derivedCapability": "review", "state": "pending" }, "callerIdentity": "kimi", "targetProfileCapabilities": { "chat": "unavailable", "review": "unavailable", "terminal": "unavailable" }, "expected": { "accepted": false, "errorCode": "CAPABILITY_UNAVAILABLE", "mintsToken": false }, "note": "unavailability derives from the live kimi profile, not from prose" },
+    { "id": "accept-kimi-chat-unavailable-baseline", "handoff": { "target": "kimi", "derivedCapability": "chat", "state": "pending" }, "callerIdentity": "kimi", "targetProfileCapabilities": { "chat": "unavailable" }, "expected": { "accepted": false, "errorCode": "CAPABILITY_UNAVAILABLE", "mintsToken": false }, "note": "current baseline: kimi chat is NOT_WIRED, so even chat is unavailable" }
+  ],
+  "artifactCases": [
+    { "id": "artifact-resolves-ok", "artifact": { "type": "file", "path": "container/gate.js", "revision": "093dca4" }, "resolves": true, "revisionMatchesAtAcceptance": true, "revisionMatchesAtCompletion": true, "readFromImmutableObject": true, "expected": { "accepted": true, "completed": true } },
+    { "id": "artifact-missing-blocked", "artifact": { "type": "file", "path": "container/does-not-exist.js", "revision": "093dca4" }, "resolves": false, "expected": { "accepted": false, "errorCode": "ARTIFACT_MISSING" } },
+    { "id": "artifact-revision-changed-at-acceptance", "artifact": { "type": "file", "path": "container/gate.js", "revision": "093dca4" }, "resolves": true, "revisionMatchesAtAcceptance": false, "expected": { "accepted": false, "errorCode": "ARTIFACT_REVISION_CHANGED" } },
+    { "id": "artifact-revision-changed-at-completion", "artifact": { "type": "file", "path": "container/gate.js", "revision": "093dca4" }, "resolves": true, "revisionMatchesAtAcceptance": true, "revisionMatchesAtCompletion": false, "expected": { "completed": false, "errorCode": "ARTIFACT_REVISION_CHANGED" }, "note": "pin re-validated at completion; receiver read the immutable object, not the moved working path" }
+  ],
+  "chainCases": [
+    { "id": "chain-propagation-inherits-chainid", "parentHandoff": { "id": "ho_parent", "chainId": "chain_1", "state": "accepted", "target": "codex" }, "childMintedByTargetRun": { "source": "codex", "target": "gemini" }, "expected": { "chainId": "chain_1", "parentHandoffId": "ho_parent" } },
+    { "id": "chain-fresh-originating-mints-new-chainid", "originating": true, "request": { "source": "claude", "target": "codex" }, "expected": { "newChainId": true, "parentHandoffId": null } },
+    { "id": "chain-hop-limit-blocked", "chainState": { "handoffs": 10 }, "chainLimit": { "maxHandoffs": 10 }, "newHop": true, "expected": { "accepted": false, "errorCode": "HANDOFF_CHAIN_LIMIT" }, "note": "chains-lib maxHandoffs owns this ceiling" },
+    { "id": "chain-same-pair-third-hop-blocked", "chainState": { "recentPairs": ["codex->claude", "codex->claude"] }, "newHop": "codex->claude", "chainLimit": { "maxConsecutiveSamePair": 2 }, "expected": { "accepted": false, "errorCode": "HANDOFF_CHAIN_LIMIT" }, "note": "a genuine 3rd CONSECUTIVE same-pair hop -> chains-lib handoff_pingpong (trailing==2>=2)" },
+    { "id": "chain-alternating-pair-allowed", "chainState": { "recentPairs": ["codex->claude", "claude->codex"] }, "newHop": "codex->claude", "chainLimit": { "maxConsecutiveSamePair": 2 }, "expected": { "accepted": true }, "note": "A->B->A->B is fine (chains-lib.js:31); only a 3rd CONSECUTIVE same-pair hop blocks -- this locks the contract's :200 claim" },
+    { "id": "chain-loop-objective-repeat-blocked", "chainState": { "seenObjective": true }, "newHop": true, "expected": { "accepted": false, "errorCode": "HANDOFF_CHAIN_LIMIT" }, "note": "objective-hash loop guard from chains-lib" },
+    { "id": "chain-cost-cap-blocked", "chainState": { "costUsd": 14.8 }, "reservation": { "maxCostUsd": 0.8 }, "chainLimit": { "maxCostUsd": 15 }, "expected": { "accepted": false, "errorCode": "HANDOFF_CHAIN_LIMIT" }, "note": "per-hop reservation cannot push chain past chains-lib maxCostUsd" }
+  ],
+  "senderResultCases": [
+    { "id": "stale-sender-result-blocked", "handoff": { "runId": "run_1", "senderResultRevisionAtCreation": "r1" }, "senderResultRevisionNow": "r2", "expected": { "accepted": false, "errorCode": "STALE_SENDER_RESULT" } }
+  ],
+  "stateCases": [
+    { "id": "state-completed-terminal", "from": "accepted", "event": "result-effect-ok", "expected": { "state": "completed", "terminal": true } },
+    { "id": "state-second-terminal-completion-refused", "from": "completed", "event": "result", "expected": { "accepted": false, "refused": true }, "note": "one accepted id cannot produce two terminal completions" },
+    { "id": "state-rejected-terminal", "from": "pending", "event": "reject", "expected": { "state": "rejected", "terminal": true, "reservationReleased": true } },
+    { "id": "state-expired-terminal", "from": "pending", "event": "accept-deadline-passed", "expected": { "state": "expired", "terminal": true, "reservationReleased": true } },
+    { "id": "state-lease-breach-to-blocked", "from": "accepted", "event": "execution-lease-expired", "expected": { "state": "blocked", "terminal": false, "reservationReleased": true, "returnsControlToRun": true, "emitsInboxAttentionItem": true }, "note": "orphaned accepted must not stall forever" },
+    { "id": "state-target-fault-to-blocked", "from": "accepted", "event": "target-fault", "expected": { "state": "blocked", "reservationReleased": true, "returnsControlToRun": true } },
+    { "id": "state-cancel-cascade-to-cancelled", "from": "accepted", "event": "originating-run-cancelled", "expected": { "state": "cancelled", "terminal": true, "reservationReleased": true, "signalsTargetViaStopGate": true, "inheritsAuthorityOverTarget": false }, "note": "cancel signals through the existing STOP gate, never by inheriting authority" },
+    { "id": "state-blocked-reissue-new-id-same-chain", "from": "blocked", "event": "reissue", "reissuedBy": "originating-run-owner", "expected": { "state": "pending", "newId": true, "sameChainId": true, "setsReissuedFrom": true, "freshExpiry": true, "rePinsRevision": true } },
+    { "id": "state-reaccept-blocked-id-forbidden", "from": "blocked", "event": "accept", "expected": { "accepted": false, "refused": true }, "note": "must reissue a fresh id, not re-accept the blocked one" },
+    { "id": "state-reissue-limit-blocked", "chainState": { "reissues": 3 }, "limit": { "reissueMaxPerChain": 3 }, "event": "reissue", "expected": { "accepted": false, "errorCode": "HANDOFF_REISSUE_LIMIT" } }
+  ],
+  "authorityCases": [
+    { "id": "no-credential-crosses-boundary", "field": "credential", "sourceHas": true, "presentOnAcceptedRecord": false },
+    { "id": "no-writable-path-or-lease-crosses-boundary", "field": "worktreeLease", "sourceHas": true, "presentOnAcceptedRecord": false },
+    { "id": "no-claim-token-crosses-boundary", "field": "claimToken", "sourceHas": true, "presentOnAcceptedRecord": false },
+    { "id": "no-autonomy-level-crosses-boundary", "field": "autonomyLevel", "sourceHas": true, "presentOnAcceptedRecord": false },
+    { "id": "no-review-exemption-crosses-boundary", "field": "reviewExemption", "sourceHas": true, "presentOnAcceptedRecord": false },
+    { "id": "no-git-rung-crosses-boundary", "field": "gitMaxRung", "sourceHas": true, "presentOnAcceptedRecord": false }
+  ],
+  "secretInputCases": [
+    { "id": "secret-in-context-summary-scrubbed", "injectField": "contextSummary", "injectContainsSeededSecret": true, "expected": { "recordStoresRawSecret": false, "inboxItemStoresRawSecret": false, "influencesAuthority": false }, "note": "contextSummary is untrusted data; a planted secret never surfaces in the record or chain and never affects capability/authority" }
+  ],
+  "envelopeCases": [
+    { "id": "envelope-success-accept", "expected": { "status": "success", "summary": "Codex accepted the review handoff.", "next_actions": [], "artifacts": [] } },
+    { "id": "envelope-warning-blocked", "expected": { "status": "warning", "summary": "Handoff is blocked; its execution lease expired.", "next_actions": ["Reissue with a fresh revision, or return control to the originating run."], "artifacts": [] } },
+    { "id": "envelope-error-duplicate", "expected": { "status": "error", "summary": "This handoff was already accepted.", "next_actions": [], "artifacts": [], "error": { "code": "DUPLICATE_ACCEPTANCE", "retry": "Do not re-accept; open the existing accepted chain in the inbox.", "stopCondition": "Never mint a second acceptance token for one handoff id." } } },
+    { "id": "envelope-error-capability", "expected": { "status": "error", "summary": "The target cannot accept this handoff right now.", "next_actions": [], "artifacts": [], "error": { "code": "CAPABILITY_UNAVAILABLE", "retry": "Grant the capability through its own gate, then reissue.", "stopCondition": "Do not accept until the target profile reports the derived capability available." } } },
+    { "id": "envelope-error-acceptor-not-target", "expected": { "status": "error", "summary": "Only the target agent may accept this handoff.", "next_actions": [], "artifacts": [], "error": { "code": "ACCEPTOR_NOT_TARGET", "retry": "Have the target agent's own run accept the handoff.", "stopCondition": "Never accept a handoff on another agent's behalf." } } },
+    { "id": "envelope-error-chain-limit", "expected": { "status": "error", "summary": "This handoff would exceed a chain guard ceiling.", "next_actions": [], "artifacts": [], "error": { "code": "HANDOFF_CHAIN_LIMIT", "retry": "Let the chain synthesize and close before starting another hop.", "stopCondition": "Do not route around the chains-lib ceiling." } } },
+    { "id": "envelope-error-self-review", "expected": { "status": "error", "summary": "An agent cannot review its own work.", "next_actions": [], "artifacts": [], "error": { "code": "SELF_REVIEW_FORBIDDEN", "retry": "Route the review to a different engine.", "stopCondition": "Never accept a self-review regardless of reviewRequirement." } } },
+    { "id": "envelope-error-budget", "expected": { "status": "error", "summary": "The reservation exceeds an applicable budget limit.", "next_actions": [], "artifacts": [], "error": { "code": "BUDGET_RESERVATION_INVALID", "retry": "Lower the reservation to fit the most restrictive cap.", "stopCondition": "A reservation can never raise an effective cap." } } }
+  ]
+}

@@ -1,0 +1,16 @@
+---
+id: 90947c004623-newsletter-beehiiv
+trigger: "When sending monetary amounts via the Slack tool"
+confidence: 0.8
+domain: "integration"
+source: "memory/C--Users-User/newsletter_beehiiv.md"
+scope: global
+---
+
+# Newsletter Beehiiv
+
+## Action
+Spell out dollar amounts in prose to prevent the output pipeline from stripping the dollar sign and digits.
+
+## Evidence
+Seeded from memory/C--Users-User/newsletter_beehiiv.md via seed_instincts.py.

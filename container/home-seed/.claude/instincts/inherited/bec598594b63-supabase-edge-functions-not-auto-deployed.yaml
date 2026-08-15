@@ -1,0 +1,16 @@
+---
+id: bec598594b63-supabase-edge-functions-not-auto-deployed
+trigger: "When modifying Supabase Edge Functions"
+confidence: 0.9
+domain: "workflow"
+source: "vault/03_Insights/Supabase Edge Functions Not Auto Deployed.md"
+scope: global
+---
+
+# Supabase Edge Functions Not Auto Deployed
+
+## Action
+Manually run `npx supabase functions deploy` as they do not auto-deploy from git.
+
+## Evidence
+Seeded from vault/03_Insights/Supabase Edge Functions Not Auto Deployed.md via seed_instincts.py.

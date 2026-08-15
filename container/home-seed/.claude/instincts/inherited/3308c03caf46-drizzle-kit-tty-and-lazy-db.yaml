@@ -1,0 +1,16 @@
+---
+id: 3308c03caf46-drizzle-kit-tty-and-lazy-db
+trigger: "When exporting a database client in a Next.js or Vercel project"
+confidence: 0.8
+domain: "integration"
+source: "vault/03_Insights/Drizzle Kit Tty And Lazy Db.md"
+scope: global
+---
+
+# Drizzle Kit Tty And Lazy Db
+
+## Action
+Lazy-initialize the client to prevent build failures caused by missing environment variables during static analysis.
+
+## Evidence
+Seeded from vault/03_Insights/Drizzle Kit Tty And Lazy Db.md via seed_instincts.py.

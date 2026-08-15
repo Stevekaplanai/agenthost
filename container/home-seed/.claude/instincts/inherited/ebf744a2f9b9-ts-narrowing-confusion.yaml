@@ -1,0 +1,16 @@
+---
+id: ebf744a2f9b9-ts-narrowing-confusion
+trigger: "when TypeScript throws a 'does not exist on type never' error"
+confidence: 0.8
+domain: "debugging"
+source: "vault/03_Insights/TS Narrowing Confusion.md"
+scope: global
+---
+
+# Ts Narrowing Confusion
+
+## Action
+Remove or fix type casts that confuse TypeScript's type narrowing.
+
+## Evidence
+Seeded from vault/03_Insights/TS Narrowing Confusion.md via seed_instincts.py.

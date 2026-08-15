@@ -1,0 +1,16 @@
+---
+id: b45e5b592752-feedback-cron-durable-ignored-session-only
+trigger: "When scheduling long-horizon reminders using CronCreate"
+confidence: 0.8
+domain: "integration"
+source: "memory/C--Users-User-content-engine/feedback_cron_durable_ignored_session_only.md"
+scope: global
+---
+
+# Feedback Cron Durable Ignored Session Only
+
+## Action
+Warn the user that crons are session-only and write the pending action to a project memory file as a backup.
+
+## Evidence
+Seeded from memory/C--Users-User-content-engine/feedback_cron_durable_ignored_session_only.md via seed_instincts.py.

@@ -1,0 +1,37 @@
+---
+id: claude-design-template-tokens-override
+trigger: "when extracting a claude.com/design bundle for a project with custom brand tokens"
+confidence: 0.9
+domain: "design-systems"
+source: "session-observation"
+scope: global
+created_at: "2026-05-03"
+last_observed_at: "2026-05-02"
+---
+
+# claude.com/design template defaults override custom tokens at runtime
+
+## Action
+
+Check FOUR surfaces, not just `styles.css`:
+
+1. `project/primitives.jsx` — exports `COLORS` and `FONTS` consumed by every artboard
+2. `project/app-shell.jsx` — `TWEAK_DEFAULTS` block reassigns `COLORS.accent` etc. on mount
+3. `project/app.jsx` — same `TWEAK_DEFAULTS` pattern
+4. `project/index.html` — gallery wrapper has hardcoded `:root` CSS variables
+
+If you only update `styles.css`, the artboards still render with the off-brand template defaults (cream `#F5F0E8` / coral `#D97757` / Source Serif 4) because the JSX runtime overwrites your tokens.
+
+## Evidence
+
+- 2026-05-02: GTMVP YouTube Trio bundle (URL `XdZAVK_4zPTZkHnxPJ0o0A`). `styles.css` correctly used v2 Buildroom Editorial tokens, but 42 artboards rendered off-brand because `primitives.jsx` exported the template defaults and `app-shell.jsx`/`app.jsx` overwrote `COLORS.accent`/`canvas`/`paper` at React mount time. Fixed by editing all 4 files.
+
+## Detection
+
+```bash
+grep -nE "#F5F0E8|#FBF7F0|#D97757|Source Serif" project/*.jsx project/*.html
+```
+
+## Related
+
+- Memory entry: `reference_claude_design_bundle_brand_token_gotcha.md`

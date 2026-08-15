@@ -1,0 +1,16 @@
+---
+id: 1fbd70cb2898-github-cli-squash-silently-dropping-commits
+trigger: "When a PR squash silently drops commits due to overlapping history"
+confidence: 0.8
+domain: "workflow"
+source: "vault/03_Insights/GitHub CLI Squash Silently Dropping Commits.md"
+scope: global
+---
+
+# Github Cli Squash Silently Dropping Commits
+
+## Action
+Re-apply the changes on a fresh branch without shared history.
+
+## Evidence
+Seeded from vault/03_Insights/GitHub CLI Squash Silently Dropping Commits.md via seed_instincts.py.

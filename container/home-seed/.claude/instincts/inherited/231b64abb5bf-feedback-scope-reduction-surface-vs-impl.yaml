@@ -1,0 +1,16 @@
+---
+id: 231b64abb5bf-feedback-scope-reduction-surface-vs-impl
+trigger: "When proposing scope reduction"
+confidence: 0.8
+domain: "workflow"
+source: "memory/C--Users-User/feedback_scope_reduction_surface_vs_impl.md"
+scope: global
+---
+
+# Feedback Scope Reduction Surface Vs Impl
+
+## Action
+Frame it as hiding user-facing surfaces rather than deleting backend code.
+
+## Evidence
+Seeded from memory/C--Users-User/feedback_scope_reduction_surface_vs_impl.md via seed_instincts.py.

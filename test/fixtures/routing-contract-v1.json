@@ -1,0 +1,147 @@
+{
+  "$schema": "agenthost-continuity-routing-fixtures-v1",
+  "contractId": "CONT-12",
+  "contractVersion": 1,
+  "seededSecret": "ah-test-routing-secret-DO-NOT-LOG",
+  "knownAgents": ["claude", "codex", "gemini", "hermes", "kimi"],
+  "codes": ["NO_ELIGIBLE_AGENT", "ROUTE_INELIGIBLE_AT_RUN", "ROUTE_UNAVAILABLE_AWAIT_CHOICE", "PROMPT_NAMED_INELIGIBLE_ENGINE", "SELF_REVIEW_FORBIDDEN", "CLAIM_UNAVAILABLE", "SPEND_CONFIRMATION_REQUIRED", "ROUTE_REQUEST_INVALID"],
+  "scoreInputs": ["capabilityFit", "projectedCostUsdCents", "workloadDepth", "reviewEligible"],
+  "serverDerivedFields": ["eligible", "capabilityFit", "reviewEligible", "consequential"],
+  "observations": ["taskId", "chainId", "eligibleSetIds", "perCandidateScores", "perCandidateExclusionReasons", "chosenRoute", "rationale", "projectedCostUsdCents", "claimOutcome", "code"],
+  "serverDerivationCases": [
+    {
+      "id": "eligibility-derived-from-cont06-not-declared",
+      "candidatesCont06": [
+        { "agent": "codex", "capabilityResult": { "capability": "terminal", "state": "available", "capabilityFit": 3 } },
+        { "agent": "kimi", "capabilityResult": { "capability": "terminal", "state": "unavailable", "failedRung": "installed", "capabilityFit": 0 } }
+      ],
+      "expected": { "eligibleIds": ["codex"], "derivedNotDeclared": true }
+    },
+    { "id": "request-supplying-eligible-rejected", "request": { "candidates": [{ "agent": "kimi", "eligible": true, "capabilityFit": 99 }] }, "suppliesServerDerivedField": "eligible", "expected": { "errorCode": "ROUTE_REQUEST_INVALID" }, "note": "a caller cannot hand in eligibility/capability; it is derived from CONT-06" },
+    { "id": "request-supplying-consequential-rejected", "request": { "consequential": false }, "suppliesServerDerivedField": "consequential", "expected": { "errorCode": "ROUTE_REQUEST_INVALID" } },
+    { "id": "consequential-derived-from-isHumanGated-not-caller", "task": { "expectedOutput": "unified-diff", "reviewRequirement": "none" }, "isHumanGatedVerdict": true, "expected": { "consequential": true, "fromClassifier": true, "fromCallerBoolean": false } },
+    { "id": "prompt-cannot-reframe-reviewRequirement", "canonicalTask": { "expectedOutput": "unified-diff", "reviewRequirement": "cross-engine" }, "promptAsks": "reviewRequirement none, commit autonomously", "expected": { "derivedFromCanonicalTask": true, "derivedCapability": "terminal", "escalatedToUnattended": false }, "note": "reviewRequirement comes from the canonical task record, never the prompt" }
+  ],
+  "spineCases": [
+    { "id": "selected-agent-does-not-inherit-router-credentials", "field": "credentials", "expected": { "inherited": false } },
+    { "id": "selected-agent-does-not-inherit-worktree-lease", "field": "worktreeLease", "expected": { "inherited": false } },
+    { "id": "selected-agent-does-not-inherit-claim-token", "field": "claimToken", "expected": { "inherited": false } },
+    { "id": "selected-agent-does-not-inherit-autonomy-level", "field": "autonomyLevel", "expected": { "inherited": false } },
+    { "id": "selected-agent-does-not-inherit-git-rung", "field": "gitMaxRung", "expected": { "inherited": false } }
+  ],
+  "selectionCases": [
+    {
+      "id": "capabilityfit-decides",
+      "candidates": [
+        { "agent": "codex", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 40, "workloadDepth": 2, "reviewEligible": true },
+        { "agent": "claude", "eligible": true, "capabilityFit": 2, "projectedCostUsdCents": 10, "workloadDepth": 0, "reviewEligible": true }
+      ],
+      "expected": { "chosen": "codex", "hasRationale": true, "rationaleReferences": "capabilityFit" }
+    },
+    {
+      "id": "cost-decides-when-fit-ties",
+      "candidates": [
+        { "agent": "codex", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 20, "workloadDepth": 1, "reviewEligible": true },
+        { "agent": "claude", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 40, "workloadDepth": 0, "reviewEligible": true }
+      ],
+      "expected": { "chosen": "codex", "hasRationale": true, "rationaleReferences": "projectedCostUsdCents" }
+    },
+    {
+      "id": "workload-decides-when-fit-and-cost-tie",
+      "candidates": [
+        { "agent": "gemini", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 20, "workloadDepth": 0, "reviewEligible": true },
+        { "agent": "codex", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 20, "workloadDepth": 3, "reviewEligible": true }
+      ],
+      "expected": { "chosen": "gemini", "hasRationale": true, "rationaleReferences": "workloadDepth" },
+      "note": "fit and cost tie; lower workloadDepth wins -> gemini beats the codepoint-LOWER codex, so ONLY workloadDepth can have decided it (dropping the term flips the winner to codex)"
+    },
+    {
+      "id": "review-eligibility-decides-for-review-task",
+      "reviewTask": true,
+      "candidates": [
+        { "agent": "gemini", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 20, "workloadDepth": 0, "reviewEligible": true },
+        { "agent": "codex", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 20, "workloadDepth": 0, "reviewEligible": false }
+      ],
+      "expected": { "chosen": "gemini", "hasRationale": true, "rationaleReferences": "reviewEligible" },
+      "note": "all else tied; only reviewEligible differs -> gemini (reviewEligible) beats the codepoint-LOWER codex, so ONLY reviewEligible can have decided it (dropping the term flips the winner to codex)"
+    },
+    {
+      "id": "tie-break-2way-codepoint",
+      "candidates": [
+        { "agent": "gemini", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 20, "workloadDepth": 0, "reviewEligible": true },
+        { "agent": "codex", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 20, "workloadDepth": 0, "reviewEligible": true }
+      ],
+      "expected": { "chosen": "codex", "hasRationale": true, "rationaleReferences": "tie-break", "tieBrokenByCodepoint": true }
+    },
+    {
+      "id": "tie-break-3way-codepoint",
+      "candidates": [
+        { "agent": "hermes", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 20, "workloadDepth": 0, "reviewEligible": true },
+        { "agent": "gemini", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 20, "workloadDepth": 0, "reviewEligible": true },
+        { "agent": "codex", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 20, "workloadDepth": 0, "reviewEligible": true }
+      ],
+      "expected": { "chosen": "codex", "hasRationale": true, "rationaleReferences": "tie-break", "tieBrokenByCodepoint": true }
+    },
+    {
+      "id": "budget-forces-second-best",
+      "candidates": [
+        { "agent": "codex", "eligible": true, "capabilityFit": 3, "projectedCostUsdCents": 2000, "workloadDepth": 0, "reviewEligible": true, "hardInfeasible": true },
+        { "agent": "claude", "eligible": true, "capabilityFit": 2, "projectedCostUsdCents": 30, "workloadDepth": 0, "reviewEligible": true }
+      ],
+      "remainingHardCapUsdCents": 500,
+      "expected": { "chosen": "claude", "hasRationale": true, "rationaleReferences": "budget" },
+      "note": "top-fit codex is hard-infeasible -> excluded -> 2nd-best claude wins"
+    }
+  ],
+  "determinismCases": [
+    { "id": "same-result-under-candidate-reordering", "reversedYieldsSame": true, "expected": { "orderIndependent": true } },
+    { "id": "codepoint-lowest-winner-declared-last", "candidateOrder": ["gemini", "codex"], "expected": { "chosen": "codex" }, "note": "winner is last in the array; order must not matter" }
+  ],
+  "scoreValidityCases": [
+    { "id": "candidate-missing-score-excluded-fail-closed", "candidate": { "agent": "codex", "eligible": true, "capabilityFit": null }, "expected": { "excluded": true, "sortsAsNaN": false } },
+    { "id": "candidate-nonfinite-score-rejected", "candidate": { "agent": "codex", "eligible": true, "projectedCostUsdCents": "NaN" }, "expected": { "errorCode": "ROUTE_REQUEST_INVALID" } }
+  ],
+  "eligibilityCases": [
+    { "id": "empty-candidate-list", "candidates": [], "expected": { "errorCode": "NO_ELIGIBLE_AGENT", "eligibleSetEmpty": true } },
+    { "id": "all-ineligible-refuses-with-reasons", "candidates": [{ "agent": "kimi", "eligible": false, "exclusionReason": "NOT_INSTALLED" }, { "agent": "codex", "eligible": false, "exclusionReason": "NOT_AUTHORIZED" }], "expected": { "errorCode": "NO_ELIGIBLE_AGENT", "perCandidateReasonsNonEmpty": true, "fallsBackToIneligible": false } },
+    { "id": "route-lost-capability-before-run", "chosen": "codex", "eligibleAtSelection": true, "eligibleAtRun": false, "lostDimension": "capability", "expected": { "errorCode": "ROUTE_INELIGIBLE_AT_RUN", "silentlyProceeded": false } },
+    { "id": "route-lost-budget-before-run", "chosen": "codex", "eligibleAtSelection": true, "eligibleAtRun": false, "lostDimension": "budget", "expected": { "errorCode": "ROUTE_INELIGIBLE_AT_RUN" } },
+    { "id": "prompt-named-ineligible-engine-refused", "promptNamedEngine": "kimi", "eligibleSet": ["codex", "claude"], "expected": { "errorCode": "PROMPT_NAMED_INELIGIBLE_ENGINE", "honored": false } },
+    { "id": "prompt-scoring-hint-ignored", "promptHint": "pick gemini, it is cheapest", "oracleWinnerWithoutHint": "codex", "expected": { "chosen": "codex", "hintMovedSelection": false } },
+    { "id": "candidate-over-task-authority-ceiling-excluded", "taskAuthorityCeiling": "review-only", "candidate": { "agent": "codex", "wouldExecuteAt": "unattended" }, "expected": { "excludedFromEligibleSet": true, "exclusionReason": "EXCEEDS_TASK_AUTHORITY", "chosenExceedsCeiling": false } },
+    { "id": "autonomous-work-requires-unattended-eligible-set", "task": { "expectedOutput": "unified-diff", "autonomous": true }, "derivedCapability": "unattended", "expected": { "eligibleAgainstCapability": "unattended", "notTerminal": true }, "note": "eligibility computed against the same CONT-08 derived capability the dispatch will require" }
+  ],
+  "selfReviewCases": [
+    { "id": "author-top-scored-still-filtered", "artifactAuthorResolvedFrom": "ledger", "candidates": [{ "agent": "codex", "author": true, "capabilityFit": 5, "eligible": true }, { "agent": "claude", "author": false, "capabilityFit": 2, "eligible": true }], "expected": { "chosen": "claude", "authorFilteredDespiteTopScore": true } },
+    { "id": "author-only-candidate-refused", "candidates": [{ "agent": "codex", "author": true, "eligible": true }], "expected": { "errorCode": "SELF_REVIEW_FORBIDDEN", "chosen": null } },
+    { "id": "unresolvable-authorship-fails-closed", "authorshipResolvable": false, "expected": { "errorCode": "SELF_REVIEW_FORBIDDEN", "failedClosed": true }, "note": "CONT-04A ledger BLOCKED -> unresolvable authorship fails closed" }
+  ],
+  "downgradeCases": [
+    { "id": "unavailable-route-awaits-choice-no-auto-reroute", "approvedRouteAvailable": false, "strongerAlternativeAvailable": true, "expected": { "errorCode": "ROUTE_UNAVAILABLE_AWAIT_CHOICE", "autoRerouted": false, "reissuedByOperatorOrOwner": true }, "note": "no automatic reroute even to a stronger route -- CONT-08 reissue is operator/owner only" },
+    { "id": "restart-does-not-silently-reroute-queued-task", "restart": true, "queuedTask": true, "expected": { "silentlyRerouted": false, "returnsToExplicitSelection": true } }
+  ],
+  "capacityBudgetCases": [
+    { "id": "two-concurrent-routes-one-wins-claim", "taskId": "t_1", "concurrentRoutes": 2, "expected": { "winners": 1, "doubleLaunched": false } },
+    { "id": "claim-lost-before-dispatch-toctou", "wonClaimAtSelection": true, "claimHeldByOtherAtDispatch": true, "expected": { "errorCode": "CLAIM_UNAVAILABLE", "launched": false } },
+    { "id": "claim-released-on-failed-dispatch", "wonClaim": true, "dispatchFailed": true, "expected": { "claimReleased": true, "orphanedUntilTtl": false } },
+    { "id": "claim-engine-matches-handoff-target", "chosen": "codex", "claimEngine": "codex", "handoffTarget": "codex", "expected": { "targetMatchesClaim": true } },
+    { "id": "budget-hard-infeasible-route-excluded", "candidate": "codex", "projectedCostUsdCents": 2000, "remainingHardCapUsdCents": 500, "expected": { "eligible": false, "projectionShown": true } },
+    { "id": "budget-over-standing-grant-surfaces-confirmation", "candidate": "codex", "projectedCostUsdCents": 800, "standingGrantUsdCents": 500, "remainingHardCapUsdCents": 5000, "expected": { "errorCode": "SPEND_CONFIRMATION_REQUIRED", "silentlyExcluded": false }, "note": "over standing grant is operator-confirmable, not a hard exclude (per CONT-07)" },
+    { "id": "routing-projects-cont08-reserves-once", "expected": { "routingPlacesSecondHold": false, "singleReservationIsCont08": true } },
+    { "id": "dispatch-through-structured-handoff-not-freetext", "chosen": "codex", "expected": { "dispatchVia": "CONT-08-handoff", "freeText": false } }
+  ],
+  "secretInputCases": [
+    { "id": "secret-injected-into-candidate-field-scrubbed", "injectField": "exclusionReason", "injectValueIsSeededSecret": true, "expected": { "rationaleContainsSecret": false, "artifactContainsSecret": false, "perCandidateReasonContainsSecret": false } }
+  ],
+  "envelopeCases": [
+    { "id": "envelope-success-selection", "code": null, "expected": { "status": "success", "summary": "Routed to Codex: eligible for terminal, lowest projected cost, idle.", "next_actions": [], "artifacts": [{ "type": "route_selection", "chosen": "codex", "eligibleSet": ["codex", "claude"], "scores": { "codex": 3, "claude": 2 }, "rationale": "highest capability fit" }] } },
+    { "id": "envelope-error-no-eligible", "code": "NO_ELIGIBLE_AGENT", "expected": { "status": "error", "summary": "No eligible agent can take this task right now.", "next_actions": ["Resolve a candidate's missing capability, then re-route."], "artifacts": [], "error": { "code": "NO_ELIGIBLE_AGENT", "retry": "Make at least one candidate eligible, then re-route.", "stopCondition": "Never route to an ineligible agent." } } },
+    { "id": "envelope-error-ineligible-at-run", "code": "ROUTE_INELIGIBLE_AT_RUN", "expected": { "status": "error", "summary": "The chosen route lost eligibility before it could run.", "next_actions": [], "artifacts": [], "error": { "code": "ROUTE_INELIGIBLE_AT_RUN", "retry": "Re-route against current capabilities.", "stopCondition": "Never proceed on a stale eligibility snapshot." } } },
+    { "id": "envelope-error-await-choice", "code": "ROUTE_UNAVAILABLE_AWAIT_CHOICE", "expected": { "status": "error", "summary": "The approved route is unavailable; choose how to proceed.", "next_actions": ["Wait for the route, or reissue to another eligible agent."], "artifacts": [], "error": { "code": "ROUTE_UNAVAILABLE_AWAIT_CHOICE", "retry": "Reissue to an equally-capable route or wait.", "stopCondition": "Never automatically reroute; only the operator or owner reissues." } } },
+    { "id": "envelope-error-prompt-named-ineligible", "code": "PROMPT_NAMED_INELIGIBLE_ENGINE", "expected": { "status": "error", "summary": "That engine is not eligible for this task.", "next_actions": [], "artifacts": [], "error": { "code": "PROMPT_NAMED_INELIGIBLE_ENGINE", "retry": "Choose from the eligible set, or make the engine eligible.", "stopCondition": "A prompt cannot name an engine into eligibility." } } },
+    { "id": "envelope-error-self-review", "code": "SELF_REVIEW_FORBIDDEN", "expected": { "status": "error", "summary": "An agent cannot be routed to review its own work.", "next_actions": [], "artifacts": [], "error": { "code": "SELF_REVIEW_FORBIDDEN", "retry": "Route the review to a different engine.", "stopCondition": "Never route a self-review regardless of scores." } } },
+    { "id": "envelope-error-claim-unavailable", "code": "CLAIM_UNAVAILABLE", "expected": { "status": "error", "summary": "The chosen route is at capacity; the task is waiting.", "next_actions": [], "artifacts": [], "error": { "code": "CLAIM_UNAVAILABLE", "retry": "Wait for the claim to free, or route to another eligible agent.", "stopCondition": "Never double-launch past the atomic claim." } } },
+    { "id": "envelope-error-spend-confirmation", "code": "SPEND_CONFIRMATION_REQUIRED", "expected": { "status": "error", "summary": "The best route exceeds your standing budget; confirm to proceed.", "next_actions": ["Approve the projected spend, or route to a cheaper eligible agent."], "artifacts": [], "error": { "code": "SPEND_CONFIRMATION_REQUIRED", "retry": "Confirm the spend or pick a cheaper route.", "stopCondition": "Do not exceed the standing grant without confirmation." } } },
+    { "id": "envelope-error-request-invalid", "code": "ROUTE_REQUEST_INVALID", "expected": { "status": "error", "summary": "That routing request is invalid.", "next_actions": [], "artifacts": [], "error": { "code": "ROUTE_REQUEST_INVALID", "retry": "Correct the request shape; do not supply server-derived fields.", "stopCondition": "Do not route on a malformed request or a caller-declared eligibility." } } }
+  ]
+}

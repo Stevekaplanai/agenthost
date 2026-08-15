@@ -1,0 +1,16 @@
+---
+id: 0f47f6394a46-ntfs-hard-links-for-global-context
+trigger: "When sharing global context files across multiple project directories"
+confidence: 0.8
+domain: "workflow"
+source: "vault/03_Insights/NTFS hard links for global context.md"
+scope: global
+---
+
+# Ntfs Hard Links For Global Context
+
+## Action
+Use hard links to maintain a single source of truth.
+
+## Evidence
+Seeded from vault/03_Insights/NTFS hard links for global context.md via seed_instincts.py.

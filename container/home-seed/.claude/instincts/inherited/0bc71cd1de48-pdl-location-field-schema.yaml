@@ -1,0 +1,16 @@
+---
+id: 0bc71cd1de48-pdl-location-field-schema
+trigger: "When receiving a 400 error on location_country in a PDL company search"
+confidence: 0.8
+domain: "integration"
+source: "vault/03_Insights/PDL Location Field Schema.md"
+scope: global
+---
+
+# Pdl Location Field Schema
+
+## Action
+Change the query to use the nested location.country field.
+
+## Evidence
+Seeded from vault/03_Insights/PDL Location Field Schema.md via seed_instincts.py.

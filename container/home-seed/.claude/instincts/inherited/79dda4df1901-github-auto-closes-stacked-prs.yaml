@@ -1,0 +1,16 @@
+---
+id: 79dda4df1901-github-auto-closes-stacked-prs
+trigger: "When a stacked PR is auto-closed after its base branch is deleted"
+confidence: 0.9
+domain: "workflow"
+source: "vault/03_Insights/GitHub Auto-Closes Stacked PRs.md"
+scope: global
+---
+
+# Github Auto Closes Stacked Prs
+
+## Action
+Rebase the branch onto main and recreate the PR targeting main.
+
+## Evidence
+Seeded from vault/03_Insights/GitHub Auto-Closes Stacked PRs.md via seed_instincts.py.

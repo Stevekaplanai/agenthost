@@ -1,0 +1,16 @@
+---
+id: be875be60ffc-kimi-k2-6-icp-omission
+trigger: "the RUN_PROSPECT_INTEL button is disabled on fresh audits"
+confidence: 0.4
+domain: "debugging"
+source: "vault/03_Insights/Kimi K2.6 ICP Omission.md"
+scope: global
+---
+
+# Kimi K2.6 Icp Omission
+
+## Action
+Consult reference_kimi_no_canonical_icp.md regarding the missing Kimi tool schema.
+
+## Evidence
+Seeded from vault/03_Insights/Kimi K2.6 ICP Omission.md via seed_instincts.py.

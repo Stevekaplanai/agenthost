@@ -1,0 +1,16 @@
+---
+id: 082cca8a815f-feedback-ps51-native-errors
+trigger: "When probing native CLIs in PowerShell 5.1 scripts"
+confidence: 0.8
+domain: "integration"
+source: "memory/C--Users-User/feedback_ps51_native_errors.md"
+scope: global
+---
+
+# Feedback Ps51 Native Errors
+
+## Action
+Wrap calls in helper functions that locally set $ErrorActionPreference to 'SilentlyContinue' to prevent benign stderr from halting execution.
+
+## Evidence
+Seeded from memory/C--Users-User/feedback_ps51_native_errors.md via seed_instincts.py.

@@ -1,0 +1,16 @@
+---
+id: 2eabe7942698-nextjs-standalone-html-page
+trigger: "When a Next.js page needs an isolated design system that conflicts with global styles"
+confidence: 0.8
+domain: "integration"
+source: "vault/03_Insights/Nextjs Standalone Html Page.md"
+scope: global
+---
+
+# Nextjs Standalone Html Page
+
+## Action
+Place a standalone HTML file in `public/{route-name}/index.html` to bypass the App Router.
+
+## Evidence
+Seeded from vault/03_Insights/Nextjs Standalone Html Page.md via seed_instincts.py.

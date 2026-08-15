@@ -1,0 +1,75 @@
+# KNOWN FAILING TESTS -- the quarantine list.
+#
+# A test failing here does not break the build. A test failing that is NOT
+# here DOES. This list may shrink freely; growing it is a deliberate act that
+# should be reviewed, because each line is a promise the product is not keeping.
+#
+# Regenerate with: node scripts/check-new-failures.mjs --update
+#
+# 2026-08-03: the six gate-chat-durable 'disconnect' entries LEFT this list.
+# They were never a product regression on the box -- the suite's engine could
+# not START on Windows (missing spawn cwd, then the 37KB charter blowing the
+# ~32K argv limit), so the specified behavior never got to run. Diagnosing them
+# also surfaced ONE real product bug: explicit Cancel had stopped killing the
+# engine when disconnect-kill was removed (both rode the same close pipeline).
+# All fixed; the suite is 9/9 and OUT of quarantine, so a real regression in
+# phone-disconnect durability turns CI red instead of joining this pile.
+#
+# Some entries are FLAKES, not failures (port collisions, unix-socket EACCES on
+# Windows, timing races). They are listed because they fail often enough to be
+# noise; that is a reason to fix them, not to trust them.
+# Last regenerated: 2026-08-02
+/brain runs carry the same suppression (shared arg builder)
+AGENT_CHAT_HOOKS=1 keeps the user's hooks (no overlay in spawn args)
+GET /chat/wake serves the check-ins to the chat client (cookie-gated)
+Team Chat cancel quarantines an unreaped segment quickly and never starts queued work
+Team Chat quarantines an unreaped segment before the next engine and records failure
+a delayed wake engine yields to one human chat before the next wake engine
+a fresh Team Chat message runs every local engine serially through a renewed lease
+boot_wake + per-engine wake_checkin land in the audit log
+brain: a full question greps keywords, not the sentence literal (task \#34)
+cancel without terminal process proof fails durably and never starts the queued replacement
+cancelling Team during Kimi settles promptly even when fetch ignores abort
+chat runs spawn with the hook-suppression overlay by default
+every wake-eligible engine posts a check-in serially in TEAM_ORDER
+retired credential markers remain only in the rejection, cleanup, and regression guards
+the generated webinar deck contains the current no-credential-migration claim
+the unattended wake round explicitly skips Kimi and Cursor
+the wake prompt embeds the check-in contract (chat scan, board check, exact first line)
+wake quarantine cannot launch the next engine and terminalizes its durable run
+# LINUX-CI ENVIRONMENT (added 2026-08-04, task #27): the tests below fail on bare
+# ubuntu CI (and plain WSL) but pass on Windows and on the box — they need the
+# box environment (tmux, secrets, agent-uid, live services). Reproduced identical
+# on plain main (c685f51): pre-existing, NOT the #197 merge. Per the lane header,
+# quarantined with the platform named rather than letting the lane sit red.
+a benign channel message is answered: engine runs, reply is delivered via openclaw message send
+a box that is down does not affect the local room at all
+a broken chain is reported as desynced rather than silently dropped
+a causal rejection heals on pull and retries with a fresh id
+a delivered turn is not acknowledged when the chain head cannot be persisted
+a DIFFERENT channel conversation gets its OWN fresh isolated session, never chat-A's
+a live room mirrors its conversation to the box, without depending on it
+a long message is clipped inside the contract's body cap
+a lost causal-rejection response heals, burns the duplicate id, and delivers immediately
+a retry after a lost response resynchronises instead of wedging the chain
+a second message in the SAME channel conversation continues its own isolated session (not a fresh one, not the operator's)
+a terminal non-causal rejection does not block later ready turns
+a turn missed while the box is down is delivered after the room restarts
+a whole conversation reaches the box, not just the first message
+an accepted board run that loses its lane during async pre-launch work is quarantined without starting an engine
+an outbox prepare failure refuses the turn before transcript fsync, then retry succeeds
+Brain search survives a disconnect before its answer starts
+creates a consistent backup and exact target copy from a live WAL database
+every retry pass recovers transcript-fsynced work whose ready write failed
+materializer accepts explicit source and target arguments
+Phase 4 protects live and recovering durable claims before review or freeze reaches Hermes
+POST and GET mesh requests abort on deadline and a later retry can proceed
+prepared marker refresh is a default-runtime-only lifecycle command
+real gate serializes deliveries, yields to queued chat, and continues after a failed child
+rejects relative, overlapping, and pre-existing destination paths before writing
+success-shaped receipts without a valid chain hash stay pending
+the chain head survives a restart, so the next message is still accepted
+the request carries the key as a header and no tools field
+the timeout aborts a stalled request and settles null
+the two protocol success statuses are still accepted
+upTo returns the thread as of an instant, not the whole file

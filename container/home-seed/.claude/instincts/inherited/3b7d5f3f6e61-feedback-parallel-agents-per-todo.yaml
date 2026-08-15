@@ -1,0 +1,16 @@
+---
+id: 3b7d5f3f6e61-feedback-parallel-agents-per-todo
+trigger: "When a multi-step to-do list or task plan emerges"
+confidence: 0.8
+domain: "workflow"
+source: "memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/feedback_parallel_agents_per_todo.md"
+scope: global
+---
+
+# Feedback Parallel Agents Per Todo
+
+## Action
+Scan all tasks and dispatch background agents for independent work before starting sequential execution.
+
+## Evidence
+Seeded from memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/feedback_parallel_agents_per_todo.md via seed_instincts.py.

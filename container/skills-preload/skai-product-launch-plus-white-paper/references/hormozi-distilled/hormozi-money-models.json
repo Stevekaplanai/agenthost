@@ -1,0 +1,127 @@
+{
+  "ad_hooks": [
+    "\"We got our first Medicare agency client back their ad spend audit for free\" — Win Your Money Back frame: run a free CPA/leakage audit, refund the setup fee if you don't find at least $X in unattributed spend.",
+    "\"Your CRM says one thing. Your carrier commission statement says another. Here's the $40k gap nobody's showing you.\" — pain-first hook naming the exact discrepancy compliance/ops leads feel daily.",
+    "Anchor-style ad: \"Full attribution + compliance audit + call scoring: $6,000/mo. Or just the core dashboard for $497/mo.\" Present the expensive version first so the real price feels like a steal.",
+    "Decoy-style: \"Free: a spreadsheet template to track call sources by hand. Or: the system that does it automatically and flags TCPA/DNC risk before it becomes a fine.\" Two options side by side.",
+    "\"Free 20-Day Compliance Leak Check: Deposit nothing, just connect your CallRail/carrier feed. If we don't find a fixable attribution gap, we tell you that too.\" — Win Your Money Back / no-lose framing for a skeptical, compliance-anxious audience.",
+    "Giveaway-style: \"We're auditing 10 Medicare agencies' call attribution for free this month — apply below. Everyone who applies gets our whitepaper either way.\" Creates urgency + a list even for non-winners.",
+    "\"Most Medicare agencies can't answer 'which ad actually made the phone ring.' We can, in one dashboard.\" — plain problem/solution hook, mirrors the book's 'you can't have X without Y' clarity."
+  ],
+  "book": "Alex Hormozi — $100M Money Models",
+  "content_hooks": [
+    "Day 1: \"Why 'we track our ads' and 'we can prove compliance' are two completely different claims — and most Medicare agencies only have the first one.\"",
+    "\"The $680-per-lead math Hormozi used to scale gyms with no debt — and why lead-level math is the only math that matters for a call-center ops leader too.\"",
+    "Behind-the-scenes: building ClaimFlow's first attraction offer (a free attribution audit) and what we learned about which leaks agencies actually care about.",
+    "\"Unselling\" post: \"Here's what you DON'T need in an attribution tool (most vendors sell you all of it anyway).\" Position ClaimFlow as the plain-spoken alternative.",
+    "Story post: a Medicare agency owner who found out 30% of their 'organic' calls were actually paid Meta leads mis-tagged as direct — the compliance risk that created.",
+    "\"Money Model\" explainer adapted to compliance SaaS: attraction offer (free audit) to upsell (dashboard) to downsell (self-serve tier) to continuity (monthly compliance reporting) — show the whole sequence as one graphic.",
+    "Myth-bust: \"Your call tracking platform isn't a compliance tool. Here's the difference and why it matters for CMS marketing rules.\"",
+    "\"The Anchor trick\": short post explaining price anchoring using the $16,000 suit story, then pivoting to 'this is why we show you the full enterprise plan first.'",
+    "Quote-card series pulling reframed (non-verbatim) lines: \"You don't get customers to make a sale. You make sales to get customers\" applied to lead-gen agencies.",
+    "Case-study teaser building over 30 days: a serialized story of one agency's attribution mess getting solved, ending with a CTA to the whitepaper.",
+    "\"Why we don't discount ClaimFlow — we just change what's included\" — Feature Downsell logic explained as a trust-building philosophy post.",
+    "Data post: \"Agencies using [X] call sources lose track of leads at this rate\" — makes the invisible problem visible with a simple stat, no product pitch."
+  ],
+  "core_frameworks": [
+    {
+      "application": "ClaimFlow's whole GTM should be sequenced, not single-shot: (a) whitepaper = attraction offer that turns a stranger agency owner into a lead by solving a felt problem (compliance risk from bad attribution) for free; (b) email sequence = the upsell/downsell dance that turns that lead into a paid pilot; (c) Meta ads fund the attraction offer's reach; (d) 30 days of content builds the trust that makes the whitepaper worth downloading in the first place. Every piece of content should ask 'what does this reader need next' rather than repeating the same pitch.",
+      "name": "Money Models — the core structure",
+      "summary": "A Money Model is a deliberate sequence of offers, not a single price on a single product. It strings together four offer types in order: something to attract strangers, something to sell them more of once they're in, something to offer if they say no, and something to keep them paying long-term. The point is to get so much value from a customer inside the first 30 days that the cost of acquiring the next customer is no longer a bottleneck."
+    },
+    {
+      "application": "Build a genuinely free, high-value technical whitepaper (e.g. 'The Hidden Attribution Gap in Medicare Lead Generation') that gives real diagnostic value — a self-audit checklist, a formula for calculating unattributed spend — for nothing. This is the entry point that turns anonymous traffic into a named lead. Ask for contact info and a few qualifying questions (agency size, call volume, current CRM/call-tracking stack) as the 'price' of entry, mirroring the book's giveaway/entry-info pattern.",
+      "name": "Attraction Offers (overview)",
+      "summary": "Attraction Offers are how you turn strangers into customers by giving away something free or heavily discounted — because a stranger can't judge your value yet, but they can judge a price. The five variants covered are: refund-if-you-hit-a-goal, prize giveaways with a consolation discount for everyone else, a cheap/free 'decoy' shown next to a premium option, buy-more-get-free-stuff bundling, and pay-nothing-now-unless-satisfied. The mechanism in all five is the same: strip the risk out of trying you first."
+    },
+    {
+      "application": "Offer a 'Free Compliance Risk Audit' — ClaimFlow reviews an agency's current call/lead attribution setup at no cost. If the audit doesn't surface at least one fixable compliance or attribution gap, whatever nominal deposit or time cost they put in gets refunded/credited. This works because Medicare compliance is exactly the kind of 'requires ongoing effort to see results' category the book flags as ideal — it rewards agencies for actually engaging (connecting their data, attending a review call) rather than passively reading a PDF.",
+      "name": "Win Your Money Back",
+      "summary": "Customers put money (or effort) down and get it back — as cash or credit — if they hit a goal or complete specific tracked actions, or both. It works because it removes the customer's risk while still getting real engagement, and because most people who \"win\" end up rolling the refund into a bigger next purchase rather than actually walking away. The criteria have to be easy to track, genuinely tied to good outcomes, and ideally double as free advertising for the business."
+    },
+    {
+      "application": "Run a Meta ads giveaway: 'Enter for a free full ClaimFlow implementation for your agency (normally $X/year).' One agency wins the full build; everyone else who entered gets a same-value discount voucher toward onboarding. The entry form doubles as lead qualification (agency size, current tools, biggest pain point) — exactly the ammo needed for the email sequence's personalization.",
+      "name": "Giveaways",
+      "summary": "Advertise one big prize in exchange for contact info and some qualifying answers; pick a winner publicly, then privately offer everyone else a discounted version of the same prize, framed as a consolation reward. It works because everyone who entered already told you they want the prize, so the follow-up discount lands as relevant rather than as a cold pitch — and adding urgency/deadlines on both entering and claiming pushes conversion."
+    },
+    {
+      "application": "On the whitepaper landing page or a sales call, present a bare-bones self-serve tier (raw call-tracking data, no compliance layer, no support) right next to the full ClaimFlow package (compliance-flagging, carrier-matched attribution, dedicated support). Sell the outcome (provable, audit-ready attribution) not the feature list, and let the contrast between the stripped decoy and the full offer do the selling.",
+      "name": "Decoy Offer",
+      "summary": "Advertise a bare-minimum free or cheap version, then when a lead engages, show a far more valuable premium version right next to it — most people take the premium once they see the gap, and the ones who don't still became customers via the cheap option. The trick is making the decoy as basic as reasonable and the premium as compelling as possible so the contrast, not the price, does the persuading."
+    },
+    {
+      "application": "Structure ClaimFlow's onboarding pricing as 'buy 6 months, get 6 months free' rather than a flat annual price — same total contract value, but framed as more free stuff, which the book argues converts better than an equivalent percentage discount. Useful for annual-contract pushes in the email sequence once a lead is warm.",
+      "name": "Buy X Get Y Free",
+      "summary": "Reframe a price by bundling more of the same (or complementary) items in as 'free' rather than presenting an equivalent percentage discount — the same math converts better because people respond more to visible 'free' than to an abstract percent off. Works best when there's more free value than paid value, and when the business can actually deliver on the extended commitment it just sold."
+    },
+    {
+      "application": "For the free whitepaper's companion 'audit call' offer: let leads choose 'try our diagnostic dashboard for free, get billed only if you don't cancel by day 14' vs. 'pay $X now and get bonus onboarding support included.' This is well-suited to a SaaS trial pattern and gets a card on file either way, which feeds the email sequence's urgency-based follow-ups.",
+      "name": "Pay Less Now or Pay More Later",
+      "summary": "Give the customer a choice between paying nothing now (with a card on file and a bill later unless they cancel) or paying a discounted amount right now with added bonuses — this removes risk for the undecided while still collecting cards, and it lets you make a second, more profitable offer once they've committed one way or the other. A clear, trackable pass/fail condition for the 'pay later' cancellation option keeps refund rates manageable."
+    },
+    {
+      "application": "Once a Medicare agency owner is on a ClaimFlow demo or trial, every 'next question' they'd naturally have is an upsell moment: after seeing call attribution, offer carrier-commission reconciliation; after that, offer compliance audit trail/reporting for CMS reviews. Build the email sequence to walk leads through this exact 'you can't have X without Y' logic — attribution data isn't useful until it's provably compliant, which isn't useful until it reconciles against commissions.",
+      "name": "Upsell Offers (overview) — the Classic Upsell",
+      "summary": "An upsell is simply whatever you offer next, and it should solve the very next problem your last offer just revealed. Current customers convert on upsells far more easily than strangers convert on a first offer, so an upsell should be presented the moment the follow-on problem becomes obvious to the customer — the book calls this the 'you can't have X without Y' structure. Businesses that never build past their first offer are leaving most of their profit on the table."
+    },
+    {
+      "application": "In sales calls or the email sequence, don't ask 'do you want the compliance module?' — tell agency owners what they don't need (e.g., 'you don't need enterprise-tier call volume limits at your size') and prescribe exactly what they do need, then offer an A/B choice ('weekly or monthly compliance digest?') and make paying frictionless ('use the card on file?'). This mirrors how a technical buyer actually wants to be sold: shown expertise, not asked open-ended yes/no questions.",
+      "name": "Menu Upsell",
+      "summary": "Rather than asking a binary yes/no, tell the customer what they don't need (unselling), prescribe exactly what they do need with specifics on how to use it, offer a preference choice between two things that both result in a sale (A/B), and make payment frictionless by defaulting to a card already on file. Combined, these four moves get more total upsells because they remove the easy 'no' at every step."
+    },
+    {
+      "application": "In a sales conversation for ClaimFlow's compliance-tier plan, present the full enterprise attribution + compliance + dedicated CSM package first at a premium price; when the prospect balks, pivot smoothly to the standard SaaS tier which now looks like an obvious deal by comparison — as long as both tiers deliver the same core function (accurate, defensible attribution).",
+      "name": "Anchor Upsell",
+      "summary": "Present an expensive, premium version of the offer first; most people will balk (\"the gasp\"), and that reaction is the cue to offer a lower-priced but still solid alternative, which now looks like a great deal by contrast. This only works if the premium option is genuinely real and desirable (not a strawman) and if the cheaper option shares the same primary function, differing only in secondary extras."
+    },
+    {
+      "application": "For agencies that took the free whitepaper's audit or a low-cost starter tier, credit whatever they already paid/engaged with toward a bigger annual ClaimFlow contract when you follow up in the email sequence — 'you already invested $X getting the audit, we'll roll that toward a full-year plan.' Also usable for winning over competitors' unhappy call-tracking customers by crediting what they've sunk into that other tool.",
+      "name": "Rollover Upsell",
+      "summary": "Credit some or all of what a customer already paid — for the initial offer, or even for a competitor's product — toward a bigger, more expensive next purchase. This works to re-engage lapsed leads, rescue an unhappy customer instead of refunding them, poach a competitor's dissatisfied customers, or simply move current customers to a longer commitment; the new offer should be priced enough higher that even a full credit still nets a profit."
+    },
+    {
+      "application": "For price-sensitive agency owners (especially smaller call-center ops), build a payment-plan ladder into the sales process: full annual prepay at a discount, then half-now-half-in-30-days, then monthly, then (if truly hesitant) a free trial with a card on file. This turns a hard 'we can't afford it' into a workable yes without ever discounting the actual product value — critical for keeping ClaimFlow's pricing credible in a compliance-focused market where 'cheap' can read as 'not rigorous.'",
+      "name": "Downsell Offers (overview) & Payment Plan Downsell",
+      "summary": "A downsell is any offer made after a 'no' — the point is that 'no' means no to that specific offer, not no to buying at all, so the response is to keep adjusting terms until you find the deal that works for them. Payment Plan Downsells keep the price the same but change how it's paid: reward full payment with a discount rather than penalizing installments, offer financing/credit card/layaway, then split into halves, thirds, or even payments — never just lowering the price to close the deal."
+    },
+    {
+      "application": "For agencies hesitant to commit to a paid plan, offer a free trial of ClaimFlow's core attribution dashboard on the condition that they complete onboarding steps (connect ad accounts, complete a compliance walkthrough call, tag call sources) within a set window — skip the steps and a setup fee applies. This gets more real usage and better conversion than an unconditional free trial, and mirrors the same criteria used in a Win Your Money Back-style attraction offer.",
+      "name": "Trial With Penalty",
+      "summary": "Let customers use the product for free as long as they complete specific onboarding actions — miss them and a fee kicks in. This differs from a plain free trial because it manufactures real engagement (the actions required are usually the same ones that create a great long-term customer), and it can be framed to the customer simply as 'a free trial,' since explaining the penalty mechanics up front only creates resistance."
+    },
+    {
+      "application": "For agencies resistant to full pricing, downsell not by discounting but by removing a feature — e.g., drop the dedicated compliance-review call, drop real-time alerting in favor of weekly digests, or drop white-glove onboarding in favor of self-serve — while keeping the core attribution engine intact. This preserves price integrity (important in a regulated, trust-sensitive niche) while still finding a workable deal for smaller agencies.",
+      "name": "Feature Downsell",
+      "summary": "Instead of discounting, lower the price by removing something — lower quantity, lower service tier, or cutting a feature/guarantee entirely — while framing it as 'here's a version that fits your budget.' Counterintuitively, showing what's removed often makes customers realize how much they valued it and re-upsell themselves back to the full offer; if they still refuse, keep removing lower-value items until you land on a price they'll pay."
+    },
+    {
+      "application": "Structure ClaimFlow's core plan as monthly SaaS but stack in continuity mechanics: a bonus (a compliance report template pack, or a free onboarding audit) for signing up today, and/or a discount for prepaying a year. Since this is a subscription compliance tool by nature, continuity isn't optional — the goal is to make signing up today more attractive than 'thinking about it,' which the free trial/audit funnel should be engineered to push toward.",
+      "name": "Continuity Offers (overview) & Continuity Bonus / Discount / Waived Fee",
+      "summary": "Continuity Offers are subscriptions — value provided and paid for on an ongoing basis until cancellation — and they're structured with three levers: give a valuable bonus for signing up today (often worth more than the first payment), give a time-based discount for committing today, or charge a setup fee that's waived only if the customer commits to a longer term (with the fee reinstated if they cancel early). All three are about making 'yes, today' clearly better than 'maybe later,' while a clear, fair cancellation policy protects trust."
+    },
+    {
+      "application": "Treat the 90-day GTM (whitepaper + email + ads + content) as Stage I only: get the attraction offer (whitepaper/audit) reliably generating qualified Medicare-agency leads first. Don't try to launch the full upsell/downsell/continuity stack simultaneously — get the free audit converting to a paid pilot reliably, THEN build out the annual-contract upsell and compliance-tier downsell ladder, THEN formalize continuity/retention offers. Trying to ship all four stages in the first 30 days of ClaimFlow's launch risks operational collapse before any one piece is proven.",
+      "name": "Building the Money Model in stages",
+      "summary": "Don't try to launch a fully-built four-stage Money Model at once — build and perfect one offer type at a time, starting with Attraction (get customers reliably), then Upsell/Downsell (make sure they pay for themselves and then some), then Continuity (maximize long-term value). A business's operational capacity has to grow alongside the offer stack, or the new volume from a working offer will break fulfillment before it ever pays off."
+    }
+  ],
+  "email_hooks": [
+    "\"We found $47,000 of unattributed ad spend in one Medicare agency's books. Here's how.\" (results-first, curiosity-driven open)",
+    "\"The compliance question your carrier will ask you before your competitor's\" — fear-of-audit angle for a regulated niche.",
+    "\"You don't need another dashboard. You need proof.\" — reframes the category (call tracking) as insufficient, positions ClaimFlow as the real solution.",
+    "\"Quick one: does your CRM actually match your carrier's commission statement?\" — a direct, single-question opener that surfaces the exact pain the whitepaper diagnosed.",
+    "\"What we don't include in ClaimFlow (and why that's the point)\" — an unselling-style email that builds trust by naming what a prospect doesn't need.",
+    "\"Here's what happens to your ad spend if attribution stays broken through Q4\" — urgency tied to a real business calendar moment (open enrollment season).",
+    "\"You downloaded the whitepaper. Here's the one number you should calculate this week.\" — first follow-up email that gives one small, doable action, mirroring the book's 'easy to track' criteria for engagement.",
+    "\"Same offer, half the price if you lock in before [date]\" — Continuity Discount framed subject line for late-sequence conversion push.",
+    "\"Would you rather pay for leads twice, or prove which ones actually convert?\" — A/B-style either/or framing borrowed from the Menu Upsell pattern."
+  ],
+  "whitepaper_hooks": [
+    "Open with the exact 'invisible leak' framing the book uses for bad money models: agencies spend on leads, can't prove which ones converted, and quietly bleed budget the same way a business bleeds cash when it pays more to acquire a customer than it earns back.",
+    "Use a real, specific dollar-loss example (a hypothetical or anonymized agency's unattributed spend total) as the opening hook — concrete numbers over abstract claims, matching the book's style of leading with a story and a number.",
+    "Frame the whitepaper itself as a Win Your Money Back-style attraction offer: 'read this, run the audit checklist against your own numbers, and if you don't find at least one real gap, we'll say so too' — makes the free content feel low-risk and high-credibility rather than a disguised pitch.",
+    "Borrow the Decoy Offer contrast structure inside the paper: show the 'basic' way agencies currently track attribution (spreadsheets, gut feel, siloed carrier reports) next to what a compliance-grade attribution system actually looks like, letting the gap sell the need without hard-selling ClaimFlow directly.",
+    "Include a section reframing 'discount' language as 'more value' — e.g., present ClaimFlow's ROI not as 'save money' but as 'get X more provably-compliant leads for the same spend,' matching the book's insight that framing matters as much as math.",
+    "Close with a soft, no-pressure CTA modeled on the book's own bonus-stacking pattern: offer a free audit call as the natural next step, anchored against what a full compliance review would normally cost, so the free call reads as a genuine gift rather than a sales trap."
+  ]
+}

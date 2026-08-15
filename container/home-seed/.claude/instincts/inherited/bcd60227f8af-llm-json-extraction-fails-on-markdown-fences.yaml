@@ -1,0 +1,16 @@
+---
+id: bcd60227f8af-llm-json-extraction-fails-on-markdown-fences
+trigger: "parsing JSON responses from an LLM"
+confidence: 0.9
+domain: "integration"
+source: "vault/03_Insights/LLM JSON extraction fails on markdown fences.md"
+scope: global
+---
+
+# Llm Json Extraction Fails On Markdown Fences
+
+## Action
+Strip markdown code fences before parsing the JSON.
+
+## Evidence
+Seeded from vault/03_Insights/LLM JSON extraction fails on markdown fences.md via seed_instincts.py.

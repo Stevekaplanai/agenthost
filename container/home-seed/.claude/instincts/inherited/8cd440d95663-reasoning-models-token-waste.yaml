@@ -1,0 +1,16 @@
+---
+id: 8cd440d95663-reasoning-models-token-waste
+trigger: "When a reasoning model returns null content for a structured JSON task"
+confidence: 0.8
+domain: "integration"
+source: "vault/03_Insights/Reasoning models token waste.md"
+scope: global
+---
+
+# Reasoning Models Token Waste
+
+## Action
+Switch to a non-reasoning model.
+
+## Evidence
+Seeded from vault/03_Insights/Reasoning models token waste.md via seed_instincts.py.

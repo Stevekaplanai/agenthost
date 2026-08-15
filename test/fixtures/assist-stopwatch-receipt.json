@@ -1,0 +1,37 @@
+{
+  "schema": "agenthost.assist-stopwatch-receipt.v1",
+  "runDate": "2026-08-12",
+  "savedAt": "2026-08-12T21:20:34.7526722-04:00",
+  "scenario": "Realistic Design Studio actioned-card draft; input omitted and generated text never captured",
+  "runtime": "C:\\Users\\User\\.local\\bin\\claude.exe",
+  "authStatus": {
+    "loggedIn": true,
+    "authMethod": "claude.ai",
+    "apiProvider": "firstParty",
+    "subscriptionType": "max",
+    "credentialValuesRecorded": false
+  },
+  "request": {
+    "requestedModel": "haiku",
+    "reportedModel": "claude-haiku-4-5-20251001",
+    "toolCount": 0,
+    "mcpServerCount": 0,
+    "apiKeySource": "none",
+    "deadlineMs": 8000,
+    "thinkingDisabled": true
+  },
+  "timing": {
+    "firstCliEventMs": 2400,
+    "firstContentMs": 3132,
+    "completedResultMs": 3460,
+    "processCloseMs": 4022,
+    "underFiveSecondContentTarget": true
+  },
+  "outcome": {
+    "completed": true,
+    "timedOut": false,
+    "exitCode": 0,
+    "signal": null,
+    "generatedTextRecorded": false
+  }
+}

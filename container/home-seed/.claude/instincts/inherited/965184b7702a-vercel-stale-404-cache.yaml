@@ -1,0 +1,16 @@
+---
+id: 965184b7702a-vercel-stale-404-cache
+trigger: "When a newly deployed Vercel asset returns a 404"
+confidence: 0.8
+domain: "debugging"
+source: "skills/learned/vercel-stale-404-cache.md"
+scope: global
+---
+
+# Vercel Stale 404 Cache
+
+## Action
+Check the direct .vercel.app URL and the response Age header to diagnose a stale edge cache.
+
+## Evidence
+Seeded from skills/learned/vercel-stale-404-cache.md via seed_instincts.py.

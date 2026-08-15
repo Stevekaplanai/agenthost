@@ -1,0 +1,16 @@
+---
+id: 660767910374-reference-steve-email
+trigger: "When authoring git commits or setting the user email"
+confidence: 0.9
+domain: "workflow"
+source: "memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/reference_steve_email.md"
+scope: global
+---
+
+# Reference Steve Email
+
+## Action
+Always use steve@stevekaplan.ai instead of the auto-injected outlook address.
+
+## Evidence
+Seeded from memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/reference_steve_email.md via seed_instincts.py.

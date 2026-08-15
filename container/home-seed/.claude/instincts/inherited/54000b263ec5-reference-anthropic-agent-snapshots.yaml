@@ -1,0 +1,16 @@
+---
+id: 54000b263ec5-reference-anthropic-agent-snapshots
+trigger: "When updating an Anthropic Managed Agent's system prompt or skills"
+confidence: 0.8
+domain: "integration"
+source: "memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/reference_anthropic_agent_snapshots.md"
+scope: global
+---
+
+# Reference Anthropic Agent Snapshots
+
+## Action
+Archive the existing agent and create a fresh one to ensure changes take effect.
+
+## Evidence
+Seeded from memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/reference_anthropic_agent_snapshots.md via seed_instincts.py.

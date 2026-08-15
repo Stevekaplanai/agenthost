@@ -1,0 +1,16 @@
+---
+id: c4a80ef7e2df-stale-env-variables-in-local-environment
+trigger: "local tests show stale environment variables after remote updates"
+confidence: 0.8
+domain: "workflow"
+source: "vault/03_Insights/Stale .env Variables in Local Environment.md"
+scope: global
+---
+
+# Stale .Env Variables In Local Environment
+
+## Action
+Explicitly pull remote environment variables and reload the local shell session.
+
+## Evidence
+Seeded from vault/03_Insights/Stale .env Variables in Local Environment.md via seed_instincts.py.

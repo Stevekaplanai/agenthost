@@ -1,0 +1,16 @@
+---
+id: b5c1ddcba56d-vercel-env-var-changes-dont-trigger-redeploys
+trigger: "When adding or updating environment variables in Vercel"
+confidence: 0.9
+domain: "infra"
+source: "vault/03_Insights/Vercel env var changes dont trigger redeploys.md"
+scope: global
+---
+
+# Vercel Env Var Changes Dont Trigger Redeploys
+
+## Action
+Remind the user to manually trigger a redeploy for the changes to take effect.
+
+## Evidence
+Seeded from vault/03_Insights/Vercel env var changes dont trigger redeploys.md via seed_instincts.py.

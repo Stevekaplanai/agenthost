@@ -1,0 +1,16 @@
+---
+id: dda89416cdf4-bmad-method-workaround
+trigger: "when installing the BMAD method"
+confidence: 0.5
+domain: "workflow"
+source: "vault/03_Insights/Bmad Method Workaround.md"
+scope: global
+---
+
+# Bmad Method Workaround
+
+## Action
+run the workspace installer script and manually copy the generated files to the target project
+
+## Evidence
+Seeded from vault/03_Insights/Bmad Method Workaround.md via seed_instincts.py.

@@ -1,0 +1,16 @@
+---
+id: d71709ff0245-aimm-newsletter-last-workflow
+trigger: "When generating the AI Money Minute newsletter"
+confidence: 0.8
+domain: "workflow"
+source: "skills/learned/aimm-newsletter-last-workflow.md"
+scope: global
+---
+
+# Aimm Newsletter Last Workflow
+
+## Action
+Generate it as the final step only after posting to all channels and confirming their live URLs.
+
+## Evidence
+Seeded from skills/learned/aimm-newsletter-last-workflow.md via seed_instincts.py.

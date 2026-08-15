@@ -1,0 +1,16 @@
+---
+id: 42d6b5391a94-mock-fallback-client-pattern
+trigger: "when consumer code is blocked waiting for an unreleased upstream service"
+confidence: 0.8
+domain: "integration"
+source: "skills/learned/mock-fallback-client-pattern.md"
+scope: global
+---
+
+# Mock Fallback Client Pattern
+
+## Action
+Build the full typed client with an environment-toggled mock mode that returns conservative fixtures and displays honest UI status.
+
+## Evidence
+Seeded from skills/learned/mock-fallback-client-pattern.md via seed_instincts.py.

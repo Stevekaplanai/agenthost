@@ -1,0 +1,16 @@
+---
+id: b655a17d6a9f-vercel-sso-blocking-crons
+trigger: "When Vercel SSO redirects programmatic cron paths to a login page"
+confidence: 0.8
+domain: "infra"
+source: "vault/03_Insights/Vercel SSO blocking crons.md"
+scope: global
+---
+
+# Vercel Sso Blocking Crons
+
+## Action
+Disable Vercel SSO and configure explicit route bypasses for cron endpoints.
+
+## Evidence
+Seeded from vault/03_Insights/Vercel SSO blocking crons.md via seed_instincts.py.

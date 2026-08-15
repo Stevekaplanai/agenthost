@@ -1,0 +1,16 @@
+---
+id: 326a39e686d8-pipeline-dead-spot-due-to-fixed-top-n-enrichment
+trigger: "When selecting a top-N batch for a recurring pipeline"
+confidence: 0.8
+domain: "workflow"
+source: "vault/03_Insights/Pipeline dead spot due to fixed top-N enrichment.md"
+scope: global
+---
+
+# Pipeline Dead Spot Due To Fixed Top N Enrichment
+
+## Action
+Filter for unprocessed items before applying the top-N limit.
+
+## Evidence
+Seeded from vault/03_Insights/Pipeline dead spot due to fixed top-N enrichment.md via seed_instincts.py.

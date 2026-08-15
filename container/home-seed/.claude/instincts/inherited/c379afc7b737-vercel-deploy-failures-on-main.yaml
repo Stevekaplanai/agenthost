@@ -1,0 +1,16 @@
+---
+id: c379afc7b737-vercel-deploy-failures-on-main
+trigger: "After pushing code to a Vercel-deployed branch"
+confidence: 0.7
+domain: "workflow"
+source: "vault/03_Insights/Vercel deploy failures on main.md"
+scope: global
+---
+
+# Vercel Deploy Failures On Main
+
+## Action
+Poll the Vercel dashboard to verify a green build status.
+
+## Evidence
+Seeded from vault/03_Insights/Vercel deploy failures on main.md via seed_instincts.py.

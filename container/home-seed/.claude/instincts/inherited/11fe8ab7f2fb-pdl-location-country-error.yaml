@@ -1,0 +1,16 @@
+---
+id: 11fe8ab7f2fb-pdl-location-country-error
+trigger: "When getting an HTTP 400 on a PDL company lookup"
+confidence: 0.8
+domain: "integration"
+source: "vault/03_Insights/PDL location_country error.md"
+scope: global
+---
+
+# Pdl Location Country Error
+
+## Action
+Use nested location.country fields instead of flat location_country fields.
+
+## Evidence
+Seeded from vault/03_Insights/PDL location_country error.md via seed_instincts.py.

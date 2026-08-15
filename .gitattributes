@@ -1,0 +1,12 @@
+# Container scripts must stay LF or bash inside the image breaks on \r
+*.sh text eol=lf
+container/git-credential-agenthost text eol=lf
+*.mjs text eol=lf
+container/chat.html text eol=lf
+container/team-charter.md text eol=lf
+Dockerfile text eol=lf
+*.toml text eol=lf
+*.ps1 text eol=crlf
+control-plane/patches/*.patch text eol=lf
+# Generated dashboard bytes are verified by exact-tree rebuild attestation.
+container/dashboard-ui/** -diff

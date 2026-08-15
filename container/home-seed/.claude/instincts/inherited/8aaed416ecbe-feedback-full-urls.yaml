@@ -1,0 +1,16 @@
+---
+id: 8aaed416ecbe-feedback-full-urls
+trigger: "When referencing a repository, file, URL, or path"
+confidence: 0.8
+domain: "content"
+source: "memory/C--Users-User/feedback_full_urls.md"
+scope: global
+---
+
+# Feedback Full Urls
+
+## Action
+Use full URLs or absolute file paths instead of shorthand or relative references.
+
+## Evidence
+Seeded from memory/C--Users-User/feedback_full_urls.md via seed_instincts.py.

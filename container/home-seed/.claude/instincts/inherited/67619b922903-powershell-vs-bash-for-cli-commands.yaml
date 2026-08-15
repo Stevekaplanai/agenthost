@@ -1,0 +1,16 @@
+---
+id: 67619b922903-powershell-vs-bash-for-cli-commands
+trigger: "When a Bash-style CLI command fails in PowerShell"
+confidence: 0.9
+domain: "workflow"
+source: "vault/03_Insights/PowerShell vs. Bash for CLI Commands.md"
+scope: global
+---
+
+# Powershell Vs. Bash For Cli Commands
+
+## Action
+Convert the command to use PowerShell-specific syntax and cmdlets.
+
+## Evidence
+Seeded from vault/03_Insights/PowerShell vs. Bash for CLI Commands.md via seed_instincts.py.

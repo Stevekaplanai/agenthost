@@ -1,0 +1,46 @@
+---
+id: resend-broadcasts-30day-cap
+trigger: "when scheduling Resend broadcasts more than 30 days in the future"
+confidence: 0.95
+domain: "email-infrastructure"
+source: "session-observation"
+scope: global
+created_at: "2026-05-02"
+last_observed_at: "2026-05-02"
+---
+
+# Resend broadcasts.send silently caps scheduledAt at 30 days
+
+## Action
+
+Don't pass `scheduledAt` more than 30 days in the future. Resend silently fires the broadcast immediately when out of window — no error, no retry, no warning. The dashboard shows `status: sent`, `scheduled_at: null`, `sent_at: <api call time>`.
+
+For long-horizon campaigns (e.g. 60+ day event sequences), make the script idempotent and re-runnable:
+
+1. List existing broadcasts on each run (filter by status `scheduled` or `draft`)
+2. Skip duplicates by name match
+3. Skip emails whose `scheduledAt` is more than 30 days out — they get picked up on next run
+4. Print "Next run window opens: YYYY-MM-DD" at end so operator knows when to re-run
+
+## Detection
+
+After running a Resend scheduling script, GET each broadcast and verify:
+- `status: scheduled` (not `sent`)
+- `scheduled_at` populated (not null)
+- `sent_at: null`
+
+If `sent_at` is populated and matches the API call time, it misfired.
+
+## Evidence
+
+- 2026-04-19: Original SAASpocolypse 2026 email script scheduled 31 emails 75-115 days out. All 31 fired immediately to the audience (which was tiny — Steve + his mom — so blast radius was contained).
+- 2026-05-02: Patched the script with idempotent + 30-day-window logic (commit `9e9e191`). First batch (15 emails within window) scheduled correctly. Verified `scheduled_at` populated.
+
+## Source
+
+[Resend changelog: Extended Email Scheduling](https://resend.com/changelog/extended-email-scheduling)
+
+## Related
+
+- Memory entry: `reference_resend_scheduledat_30day_cap.md`
+- Reference implementation: `Projects/stevekaplanai-site/scripts/schedule-saaspocolypse-emails.ts`

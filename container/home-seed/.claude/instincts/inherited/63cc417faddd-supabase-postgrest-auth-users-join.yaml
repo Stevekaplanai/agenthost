@@ -1,0 +1,16 @@
+---
+id: 63cc417faddd-supabase-postgrest-auth-users-join
+trigger: "When querying a Supabase table with a foreign key referencing auth.users"
+confidence: 0.9
+domain: "integration"
+source: "skills/learned/supabase-postgrest-auth-users-join.md"
+scope: global
+---
+
+# Supabase Postgrest Auth Users Join
+
+## Action
+Split the join into two queries and stitch client-side, or update the foreign key to reference public.users.
+
+## Evidence
+Seeded from skills/learned/supabase-postgrest-auth-users-join.md via seed_instincts.py.

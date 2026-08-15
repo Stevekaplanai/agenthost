@@ -1,0 +1,16 @@
+---
+id: eefa76e392ae-memory-md-silos-trap-context
+trigger: "When recording universal facts or cross-project knowledge"
+confidence: 0.8
+domain: "workflow"
+source: "vault/03_Insights/MEMORY.md silos trap context.md"
+scope: global
+---
+
+# Memory.Md Silos Trap Context
+
+## Action
+Store them in a global memory file rather than project-scoped MEMORY.md files.
+
+## Evidence
+Seeded from vault/03_Insights/MEMORY.md silos trap context.md via seed_instincts.py.

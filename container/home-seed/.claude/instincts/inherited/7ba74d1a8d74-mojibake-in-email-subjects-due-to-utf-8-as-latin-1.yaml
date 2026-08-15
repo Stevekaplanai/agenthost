@@ -1,0 +1,16 @@
+---
+id: 7ba74d1a8d74-mojibake-in-email-subjects-due-to-utf-8-as-latin-1
+trigger: "When including non-ASCII characters in email subject headers"
+confidence: 0.8
+domain: "integration"
+source: "vault/03_Insights/Mojibake in email subjects due to UTF-8-as-Latin-1.md"
+scope: global
+---
+
+# Mojibake In Email Subjects Due To Utf 8 As Latin 1
+
+## Action
+Sanitize special characters and use RFC 2047 encoded-words.
+
+## Evidence
+Seeded from vault/03_Insights/Mojibake in email subjects due to UTF-8-as-Latin-1.md via seed_instincts.py.

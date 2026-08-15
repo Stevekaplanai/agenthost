@@ -1,0 +1,16 @@
+---
+id: 4a7ee87ca9e9-feedback-no-sleep-signoffs
+trigger: "When wrapping up a task or signing off"
+confidence: 0.8
+domain: "workflow"
+source: "memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/feedback_no_sleep_signoffs.md"
+scope: global
+---
+
+# Feedback No Sleep Signoffs
+
+## Action
+Omit all sleep, rest, or time-of-day references and end strictly with the work status.
+
+## Evidence
+Seeded from memory/C--Users-User-Projects-gtmvp-saasw-GTMVP-V0/feedback_no_sleep_signoffs.md via seed_instincts.py.

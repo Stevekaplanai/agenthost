@@ -1,0 +1,72 @@
+# AgentHost's final, immutable DSH overlay. It is passed after the audited
+# headless profile so project/user layers cannot re-enable these capabilities.
+
+- id: session-telemetry-otel
+  disabled: true
+
+- id: command-feedback
+  disabled: true
+
+# The outer jail has no arbitrary network. Disable the separate provider search
+# route too, so every model request must traverse the budgeted chat relay.
+- id: web
+  disabled: true
+
+- id: web-search-deepseek
+  disabled: true
+
+- id: tool-web
+  disabled: true
+
+# One root task, one process tree. Background jobs, agents, workflows and Ralph
+# would multiply provider reservations and make Stop/accounting ambiguous.
+- id: tool-jobs
+  disabled: true
+
+- id: subagent
+  disabled: true
+
+- id: subagent-spawn-in-process
+  disabled: true
+
+- id: subagent-fork-in-process
+  disabled: true
+
+- id: tool-subagent-control
+  disabled: true
+
+- id: tool-subagent-list-agents
+  disabled: true
+
+- id: tool-subagent
+  disabled: true
+
+- id: tool-subagent-fork
+  disabled: true
+
+- id: tool-subagent-report
+  disabled: true
+
+- id: workflow-worker-thread
+  disabled: true
+
+- id: tool-workflow
+  disabled: true
+
+- id: tool-ralph
+  disabled: true
+
+- id: llm-deepseek
+  config:
+    apiKeyEnv: DEEPSEEK_API_KEY
+    baseURL: http://127.0.0.1:18080
+    maxTokens: 8192
+    streamIdleTimeoutMs: 120000
+    retryPolicy:
+      mode: normal
+      maxRetries: 0
+    models:
+      - id: deepseek-v4-flash
+        name: DeepSeek-V4-Flash
+        contextWindow: 1000000
+        maxTokens: 8192

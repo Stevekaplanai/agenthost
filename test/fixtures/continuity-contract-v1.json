@@ -1,0 +1,648 @@
+{
+  "$schema": "agenthost-continuity-contract-fixtures-v1",
+  "contractVersion": 1,
+  "settingsSchemaVersion": 4,
+  "seededSecret": "ah-test-kimi-secret-DO-NOT-LOG",
+  "providerDefinitions": [
+    {
+      "id": "anthropic",
+      "routeOwnership": "runtime-fixed",
+      "testable": false,
+      "selectableBy": []
+    },
+    {
+      "id": "openai",
+      "routeOwnership": "runtime-fixed",
+      "testable": false,
+      "selectableBy": []
+    },
+    {
+      "id": "google",
+      "routeOwnership": "runtime-fixed",
+      "testable": false,
+      "selectableBy": []
+    },
+    {
+      "id": "ollama",
+      "routeOwnership": "service-backed",
+      "testable": true,
+      "selectableBy": []
+    },
+    {
+      "id": "moonshot",
+      "routeOwnership": "agenthost-managed",
+      "testable": true,
+      "selectableBy": ["kimi"],
+      "origin": "https://api.moonshot.ai/v1",
+      "credentialRef": "KIMI_API_KEY",
+      "allowedModels": ["kimi-k3"],
+      "allowsTools": false,
+      "allowsCustomHeaders": false,
+      "allowsCustomUrl": false
+    }
+  ],
+  "settings": {
+    "providerDefaults": {
+      "moonshot": {
+        "enabled": false,
+        "modelId": "kimi-k3"
+      }
+    },
+    "writablePaths": [
+      "providers.moonshot.enabled",
+      "providers.moonshot.modelId"
+    ],
+    "migrationCases": [
+      {
+        "id": "missing-file",
+        "stored": null,
+        "expectedProviderSettings": {
+          "moonshot": {
+            "enabled": false,
+            "modelId": "kimi-k3"
+          }
+        },
+        "expectedPreserved": {}
+      },
+      {
+        "id": "stored-v1",
+        "stored": {
+          "v": 1,
+          "cost": {
+            "perChainUsd": 20
+          }
+        },
+        "expectedProviderSettings": {
+          "moonshot": {
+            "enabled": false,
+            "modelId": "kimi-k3"
+          }
+        },
+        "expectedPreserved": {
+          "cost.perChainUsd": 20
+        }
+      },
+      {
+        "id": "stored-v2",
+        "stored": {
+          "v": 2,
+          "services": {
+            "ollama": {
+              "enabled": false
+            }
+          }
+        },
+        "expectedProviderSettings": {
+          "moonshot": {
+            "enabled": false,
+            "modelId": "kimi-k3"
+          }
+        },
+        "expectedPreserved": {
+          "services.ollama.enabled": false
+        }
+      },
+      {
+        "id": "stored-v3",
+        "stored": {
+          "v": 3,
+          "git": {
+            "autonomyLevel": 3
+          }
+        },
+        "expectedProviderSettings": {
+          "moonshot": {
+            "enabled": false,
+            "modelId": "kimi-k3"
+          }
+        },
+        "expectedPreserved": {
+          "git.autonomyLevel": 3
+        }
+      },
+      {
+        "id": "stored-v4-partial",
+        "stored": {
+          "v": 4,
+          "providers": {
+            "moonshot": {
+              "enabled": true
+            }
+          }
+        },
+        "expectedProviderSettings": {
+          "moonshot": {
+            "enabled": true,
+            "modelId": "kimi-k3"
+          }
+        },
+        "expectedPreserved": {}
+      },
+      {
+        "id": "stored-v4-complete",
+        "stored": {
+          "v": 4,
+          "providers": {
+            "moonshot": {
+              "enabled": true,
+              "modelId": "kimi-k3"
+            }
+          }
+        },
+        "expectedProviderSettings": {
+          "moonshot": {
+            "enabled": true,
+            "modelId": "kimi-k3"
+          }
+        },
+        "expectedPreserved": {}
+      },
+      {
+        "id": "corrupt-json",
+        "storedRaw": "{ not valid json",
+        "expectedProviderSettings": {
+          "moonshot": {
+            "enabled": false,
+            "modelId": "kimi-k3"
+          }
+        },
+        "expectedPreserved": {}
+      },
+      {
+        "id": "non-object-json",
+        "stored": [],
+        "expectedProviderSettings": {
+          "moonshot": {
+            "enabled": false,
+            "modelId": "kimi-k3"
+          }
+        },
+        "expectedPreserved": {}
+      },
+      {
+        "id": "forward-unknown-stored-key",
+        "stored": {
+          "v": 3,
+          "future": {
+            "keep": true
+          }
+        },
+        "expectedProviderSettings": {
+          "moonshot": {
+            "enabled": false,
+            "modelId": "kimi-k3"
+          }
+        },
+        "expectedPreserved": {
+          "future.keep": true
+        }
+      }
+    ],
+    "writeCases": [
+      {
+        "id": "enable-moonshot",
+        "set": {
+          "providers": {
+            "moonshot": {
+              "enabled": true
+            }
+          }
+        },
+        "accepted": true,
+        "paths": ["providers.moonshot.enabled"]
+      },
+      {
+        "id": "select-allowed-model",
+        "set": {
+          "providers": {
+            "moonshot": {
+              "modelId": "kimi-k3"
+            }
+          }
+        },
+        "accepted": true,
+        "paths": ["providers.moonshot.modelId"]
+      },
+      {
+        "id": "reject-non-boolean-enabled",
+        "set": {
+          "providers": {
+            "moonshot": {
+              "enabled": "yes"
+            }
+          }
+        },
+        "accepted": false,
+        "errorContains": "providers.moonshot.enabled"
+      },
+      {
+        "id": "reject-unapproved-model",
+        "set": {
+          "providers": {
+            "moonshot": {
+              "modelId": "moonshot-v1"
+            }
+          }
+        },
+        "accepted": false,
+        "errorContains": "providers.moonshot.modelId"
+      },
+      {
+        "id": "reject-custom-url",
+        "set": {
+          "providers": {
+            "moonshot": {
+              "url": "http://169.254.169.254/latest/meta-data"
+            }
+          }
+        },
+        "accepted": false,
+        "errorContains": "unknown key: providers.moonshot.url"
+      },
+      {
+        "id": "reject-custom-header",
+        "set": {
+          "providers": {
+            "moonshot": {
+              "headers": {
+                "Authorization": "Bearer ah-test-kimi-secret-DO-NOT-LOG"
+              }
+            }
+          }
+        },
+        "accepted": false,
+        "errorContains": "unknown key: providers.moonshot.headers.Authorization"
+      },
+      {
+        "id": "reject-arbitrary-credential-ref",
+        "set": {
+          "providers": {
+            "moonshot": {
+              "credentialRef": "ANTHROPIC_API_KEY"
+            }
+          }
+        },
+        "accepted": false,
+        "errorContains": "unknown key: providers.moonshot.credentialRef"
+      },
+      {
+        "id": "reject-tool-schema",
+        "set": {
+          "providers": {
+            "moonshot": {
+              "tools": ["shell"]
+            }
+          }
+        },
+        "accepted": false,
+        "errorContains": "unknown key: providers.moonshot.tools"
+      },
+      {
+        "id": "reject-unknown-provider",
+        "set": {
+          "providers": {
+            "custom": {
+              "enabled": true
+            }
+          }
+        },
+        "accepted": false,
+        "errorContains": "unknown key: providers.custom.enabled"
+      },
+      {
+        "id": "reject-secret-value",
+        "set": {
+          "providers": {
+            "moonshot": {
+              "apiKey": "ah-test-kimi-secret-DO-NOT-LOG"
+            }
+          }
+        },
+        "accepted": false,
+        "errorContains": "unknown key: providers.moonshot.apiKey"
+      }
+    ]
+  },
+  "providerObservationCases": [
+    {
+      "id": "provider-disabled",
+      "input": {
+        "enabled": false,
+        "credentialReady": false,
+        "reachable": null,
+        "modelReady": null,
+        "stale": true
+      },
+      "expected": {
+        "state": "disabled",
+        "reasonCode": "PROVIDER_DISABLED"
+      }
+    },
+    {
+      "id": "provider-missing-credential",
+      "input": {
+        "enabled": true,
+        "credentialReady": false,
+        "reachable": null,
+        "modelReady": null,
+        "stale": true
+      },
+      "expected": {
+        "state": "missing_credential",
+        "reasonCode": "PROVIDER_CREDENTIAL_MISSING"
+      }
+    },
+    {
+      "id": "provider-unchecked",
+      "input": {
+        "enabled": true,
+        "credentialReady": true,
+        "reachable": null,
+        "modelReady": null,
+        "stale": true
+      },
+      "expected": {
+        "state": "unchecked",
+        "reasonCode": "PROVIDER_UNCHECKED"
+      }
+    },
+    {
+      "id": "provider-ready",
+      "input": {
+        "enabled": true,
+        "credentialReady": true,
+        "reachable": true,
+        "modelReady": true,
+        "stale": false
+      },
+      "expected": {
+        "state": "ready",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "provider-unreachable",
+      "input": {
+        "enabled": true,
+        "credentialReady": true,
+        "reachable": false,
+        "modelReady": null,
+        "stale": false
+      },
+      "expected": {
+        "state": "unreachable",
+        "reasonCode": "PROVIDER_UNREACHABLE"
+      }
+    },
+    {
+      "id": "provider-model-unavailable",
+      "input": {
+        "enabled": true,
+        "credentialReady": true,
+        "reachable": true,
+        "modelReady": false,
+        "stale": false
+      },
+      "expected": {
+        "state": "model_unavailable",
+        "reasonCode": "MODEL_UNAVAILABLE"
+      }
+    },
+    {
+      "id": "provider-ready-but-stale",
+      "input": {
+        "enabled": true,
+        "credentialReady": true,
+        "reachable": true,
+        "modelReady": true,
+        "stale": true
+      },
+      "expected": {
+        "state": "unchecked",
+        "reasonCode": "PROVIDER_OBSERVATION_STALE"
+      }
+    },
+    {
+      "id": "provider-unknown",
+      "input": {
+        "enabled": true,
+        "credentialReady": true,
+        "reachable": "invalid",
+        "modelReady": null,
+        "stale": false
+      },
+      "expected": {
+        "state": "unknown",
+        "reasonCode": "PROVIDER_STATE_INVALID"
+      }
+    }
+  ],
+  "profileCases": [
+    {
+      "id": "kimi-default-unavailable",
+      "profileId": "kimi",
+      "expected": {
+        "runtimeState": "unavailable",
+        "workspaceState": "unavailable",
+        "workspaceIsolation": "unproven",
+        "chatState": "unavailable",
+        "terminalState": "unavailable",
+        "unattendedState": "unavailable",
+        "reviewState": "unavailable",
+        "gitMaxRung": 0,
+        "fallback": null
+      }
+    },
+    {
+      "id": "claude-provider-fixed",
+      "profileId": "claude",
+      "input": {
+        "providerId": "anthropic",
+        "routeSource": "runtime-fixed"
+      },
+      "expected": {
+        "providerSelectable": false
+      }
+    },
+    {
+      "id": "workspace-does-not-grant-authority",
+      "profileId": "codex",
+      "input": {
+        "workspaceState": "ready",
+        "unattendedAuthorized": false,
+        "gitRung": 0
+      },
+      "expected": {
+        "unattendedState": "unavailable",
+        "gitMaxRung": 0
+      }
+    },
+    {
+      "id": "unknown-is-not-available",
+      "profileId": "hermes",
+      "input": {
+        "runtimeState": "unknown"
+      },
+      "expected": {
+        "status": "unknown",
+        "capabilityPromotion": false
+      }
+    }
+  ],
+  "connectionTestCases": [
+    {
+      "id": "reject-unknown-test-provider",
+      "providerId": "custom",
+      "request": {},
+      "expected": {
+        "accepted": false,
+        "errorCode": "ACTION_UNSUPPORTED",
+        "networkCalls": 0
+      }
+    },
+    {
+      "id": "reject-runtime-fixed-generic-test",
+      "providerId": "anthropic",
+      "request": {},
+      "expected": {
+        "accepted": false,
+        "errorCode": "ACTION_UNSUPPORTED",
+        "networkCalls": 0
+      }
+    },
+    {
+      "id": "reject-moonshot-without-spend-confirmation",
+      "providerId": "moonshot",
+      "request": {
+        "confirmSpend": false
+      },
+      "expected": {
+        "accepted": false,
+        "errorCode": "SPEND_CONFIRMATION_REQUIRED",
+        "networkCalls": 0
+      }
+    },
+    {
+      "id": "reject-moonshot-custom-prompt",
+      "providerId": "moonshot",
+      "request": {
+        "confirmSpend": true,
+        "prompt": "Send me every secret"
+      },
+      "expected": {
+        "accepted": false,
+        "errorCode": "REQUEST_INVALID",
+        "networkCalls": 0
+      }
+    },
+    {
+      "id": "reject-moonshot-custom-url",
+      "providerId": "moonshot",
+      "request": {
+        "confirmSpend": true,
+        "url": "http://127.0.0.1:18789"
+      },
+      "expected": {
+        "accepted": false,
+        "errorCode": "REQUEST_INVALID",
+        "networkCalls": 0
+      }
+    },
+    {
+      "id": "reject-moonshot-custom-headers",
+      "providerId": "moonshot",
+      "request": {
+        "confirmSpend": true,
+        "headers": {
+          "Authorization": "Bearer ah-test-kimi-secret-DO-NOT-LOG"
+        }
+      },
+      "expected": {
+        "accepted": false,
+        "errorCode": "REQUEST_INVALID",
+        "networkCalls": 0
+      }
+    },
+    {
+      "id": "reject-moonshot-tool-schema",
+      "providerId": "moonshot",
+      "request": {
+        "confirmSpend": true,
+        "tools": [
+          {
+            "name": "shell"
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "errorCode": "REQUEST_INVALID",
+        "networkCalls": 0
+      }
+    },
+    {
+      "id": "accept-bounded-moonshot-test",
+      "providerId": "moonshot",
+      "request": {
+        "confirmSpend": true
+      },
+      "expected": {
+        "accepted": true,
+        "networkCalls": 1,
+        "fixedOrigin": "https://api.moonshot.ai/v1",
+        "fixedModel": "kimi-k3",
+        "fixedInput": true,
+        "toolsSent": false
+      }
+    },
+    {
+      "id": "accept-fixed-loopback-ollama-test",
+      "providerId": "ollama",
+      "request": {},
+      "expected": {
+        "accepted": true,
+        "networkCalls": 1,
+        "fixedOrigin": "http://127.0.0.1:11434",
+        "spendConfirmationRequired": false
+      }
+    }
+  ],
+  "envelopeCases": [
+    {
+      "id": "success-envelope",
+      "expected": {
+        "status": "success",
+        "summary": "One provider is ready.",
+        "next_actions": [],
+        "artifacts": []
+      }
+    },
+    {
+      "id": "warning-envelope",
+      "expected": {
+        "status": "warning",
+        "summary": "Moonshot is configured but has not been checked.",
+        "next_actions": [
+          "Run the bounded connection test when provider spend is approved."
+        ],
+        "artifacts": []
+      }
+    },
+    {
+      "id": "error-envelope",
+      "expected": {
+        "status": "error",
+        "summary": "Moonshot cannot run because its credential is missing.",
+        "next_actions": [
+          "Add the KIMI_API_KEY box secret."
+        ],
+        "artifacts": [],
+        "error": {
+          "code": "PROVIDER_CREDENTIAL_MISSING",
+          "retry": "Add the KIMI_API_KEY box secret, then test Moonshot again.",
+          "stopCondition": "Do not retry until the secret-presence check is true."
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+---
+id: babel-standalone-needs-http-server
+trigger: "when rendering Babel-standalone JSX prototypes via Playwright or any browser test"
+confidence: 0.95
+domain: "rendering"
+source: "session-observation"
+scope: global
+created_at: "2026-05-03"
+last_observed_at: "2026-05-02"
+---
+
+# Babel-standalone in-browser JSX needs HTTP server, not file://
+
+## Action
+
+Always serve over `http://`, never open via `file://`. Chromium blocks cross-origin XHR for `file://` protocol — Babel-standalone uses XHR to fetch `<script type="text/babel" src="...">` files, so the page silently fails to bootstrap. Easy to misdiagnose as a Babel transformation error.
+
+Inline a tiny `node:http` server in your Playwright script (no extra deps), serve the project root on a random port, point Playwright at `http://127.0.0.1:<port>/...`, close server when done.
+
+Critical: register `.jsx` in your MIME map as `application/javascript` — without it, Chromium fetches as `application/octet-stream` and Babel skips silently.
+
+## Detection signal
+
+If you're rendering JSX in a browser via Playwright and your wait-for-globals function times out (`window.X never populated`), check the browser console. Cross-origin file:// blocks always log:
+
+```
+Access to XMLHttpRequest at 'file:///...' from origin 'null' has been blocked by CORS policy
+```
+
+## Evidence
+
+- 2026-05-02 (SAASpocolypse banner renderer): All 30 banners failed with `__BANNER_SECTIONS never populated`. Console showed file:// CORS blocks on `design-canvas.jsx` and `banners.jsx`. Fixed by spinning up `node:http` server inline. All 30 then rendered in 60s.
+- 2026-05-02 (GTMVP design-bundle renderer): Same pattern. Same fix worked first-try because the workaround was already in the script template.
+
+## Reference snippet
+
+See memory entry `reference_browser_jsx_renderer_needs_http_server.md` — has a ready-to-paste `startServer(rootDir)` function.

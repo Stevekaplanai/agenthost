@@ -1,0 +1,16 @@
+---
+id: d3cbc3c1f2c6-pdl-search-api-requires-size-1
+trigger: "setting up a health probe for the PDL API"
+confidence: 0.6
+domain: "integration"
+source: "vault/03_Insights/PDL search API requires size  1.md"
+scope: global
+---
+
+# Pdl Search Api Requires Size  1
+
+## Action
+Use the `/v5/autocomplete` GET endpoint instead of search to avoid minimum size requirements and credit consumption.
+
+## Evidence
+Seeded from vault/03_Insights/PDL search API requires size  1.md via seed_instincts.py.
