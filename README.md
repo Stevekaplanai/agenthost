@@ -1,6 +1,8 @@
 # AgentHost
 
-**0.7.0 — the organization era.** The box stops being a toolbox and becomes an organization of frontier and open-weight models that works in modes: **Dev** builds software, **Growth** runs marketing for real — Brand DNA, campaigns, creative, and a measurement pack that records what actually moved — with **Ops** mode arriving next. Six engines from six different companies share one board, so the engine reviewing code is never the mind that wrote it — and the autonomy loop is proven end to end: one engine builds, a different company's engine reviews, the work merges, with no human in the middle. Governance is patent-pending (US provisionals 64/122,926 and 64/134,658). Windows, Mac, and Linux all run the same one command.
+**0.7.0 — the organization era.** The box stops being a toolbox and becomes an organization of frontier and open-weight models that works in modes: **Dev** builds software, **Growth** runs marketing for real — Brand DNA, campaigns, creative, and a measurement pack that records what actually moved — with **Ops** mode arriving next. Six engines from six different companies share one board, so the engine reviewing code is never the mind that wrote it — and the autonomy loop is proven end to end: one engine builds, a different company's engine reviews, the work merges, with the human holding the boundary, not the mouse. Governance is patent-pending (US provisionals 64/122,926 and 64/134,658). Windows, Mac, and Linux all run the same one command.
+
+> **Versioning note.** AgentHost 2.0 is the product generation (GitHub release v2.0.0, “The Team Room”). The CLI package on npm is version 0.7.0 (`npm install -g agenthost-cli`). One is the product line, the other is the installer — both are current.
 
 One command moves your local AI agent setup (Claude Code first, Hermes beta) to a 24/7 box in **your own** Fly.io account. Skills, memories, CLAUDE.md, MCP servers, plugins, and your repos come with it. Your phone gets the whole agent — not just a terminal.
 
@@ -93,7 +95,7 @@ Auth for the cloud agent: run with `--oauth-token-env` (subscription-billed, the
 
 **0.5.0 — historical gateway milestone.** This release note describes the retired 0.5.0 pages; the current product serves one Workspace at `/`, and `/hermes` is deliberately gone. At the time, the box became a multi-engine gateway: Claude, Hermes, and Codex answered in one chat thread, each turn tagged with who answered and its cost, with `@mention` routing and tap-to-approve handoffs. Ollama shipped in the image (CPU-only build, GPU payload stripped, localhost only) as an OpenAI-compatible endpoint for its cloud models.
 
-**0.4.0 — the Bridge.** `agenthost bridge` connects your box to your desktop (see above). Built the way everything here is built: no AgentHost server sees your traffic or your token, teardown is one command, and the box agent discovers the bridge by itself.
+**0.4.0 — the Bridge.** `agenthost bridge` connects your box to your desktop (see: The Bridge). Built the way everything here is built: no AgentHost server sees your traffic or your token, teardown is one command, and the box agent discovers the bridge by itself.
 
 **0.3.3** closed out launch week: the packer now strips hooks whose binaries don't exist on the box (no more phantom `command not found` at session start) and hardened its credential-pattern redaction; the harness tarball is deleted from the volume after extraction instead of being stored twice; chat history interleaves correctly on reload and no longer shows an empty "typing" bubble while your message is still queued behind another run; plus the phone keyboard/viewport fixes.
 
