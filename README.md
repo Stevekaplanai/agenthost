@@ -1,5 +1,7 @@
 # AgentHost
 
+> **Release status, August 26, 2026:** `agenthost-cli@0.7.0` is in a seven-day production soak. `1.0.0` is targeted for Monday, August 31, only if the soak completes green. No container changes will land during the soak.
+
 **0.7.0 — the organization era.** The box stops being a toolbox and becomes an organization of frontier and open-weight models that works in modes: **Dev** builds software, **Growth** runs marketing for real — Brand DNA, campaigns, creative, and a measurement pack that records what actually moved — with **Ops** mode arriving next. Six engines from six different companies share one board, so the engine reviewing code is never the mind that wrote it — and the autonomy loop is proven end to end: one engine builds, a different company's engine reviews, the work merges, with no human in the middle. Governance is patent-pending (US provisionals 64/122,926 and 64/134,658). Windows, Mac, and Linux all run the same one command.
 
 One command moves your local AI agent setup (Claude Code first, Hermes beta) to a 24/7 box in **your own** Fly.io account. Skills, memories, CLAUDE.md, MCP servers, plugins, and your repos come with it. Your phone gets the whole agent — not just a terminal.
