@@ -97,7 +97,7 @@ Auth for the cloud agent: run with `--oauth-token-env` (subscription-billed, the
 
 **0.5.0 — historical gateway milestone.** This release note describes the retired 0.5.0 pages; the current product serves one Workspace at `/`, and `/hermes` is deliberately gone. At the time, the box became a multi-engine gateway: Claude, Hermes, and Codex answered in one chat thread, each turn tagged with who answered and its cost, with `@mention` routing and tap-to-approve handoffs. Ollama shipped in the image (CPU-only build, GPU payload stripped, localhost only) as an OpenAI-compatible endpoint for its cloud models.
 
-**0.4.0 — the Bridge.** `agenthost bridge` connects your box to your desktop (see: The Bridge). Built the way everything here is built: no AgentHost server sees your traffic or your token, teardown is one command, and the box agent discovers the bridge by itself.
+**0.4.0 — the Bridge.** `agenthost bridge` connects your box to your desktop (see [The Bridge](#the-bridge-your-box--your-desktop)). Built the way everything here is built: no AgentHost server sees your traffic or your token, teardown is one command, and the box agent discovers the bridge by itself.
 
 **0.3.3** closed out launch week: the packer now strips hooks whose binaries don't exist on the box (no more phantom `command not found` at session start) and hardened its credential-pattern redaction; the harness tarball is deleted from the volume after extraction instead of being stored twice; chat history interleaves correctly on reload and no longer shows an empty "typing" bubble while your message is still queued behind another run; plus the phone keyboard/viewport fixes.
 
